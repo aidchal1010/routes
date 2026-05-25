@@ -15,6 +15,7 @@ const config: Config = {
           100: "#F2F3F5",
           400: "#9BA1AB",
         },
+        terminal: "#E8E4DA",
         orchestrator: "#9325F0",
         manager: "#E0844A",
         worker: "#4DA9CE",

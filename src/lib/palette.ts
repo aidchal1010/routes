@@ -4,6 +4,7 @@ export const palette = {
   night800: "#3A3E45",
   ink100: "#F2F3F5",
   ink400: "#9BA1AB",
+  terminal: "#E8E4DA",
   orchestrator: "#9325F0",
   manager: "#E0844A",
   worker: "#4DA9CE",
