@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-night-950: #1B1D22;
+  --color-night-900: #2A2D33;
+  --color-night-800: #3A3E45;
+  --color-ink-100: #F2F3F5;
+  --color-ink-400: #9BA1AB;
+  --color-orchestrator: #9325F0;
+  --color-manager: #E0844A;
+  --color-worker: #4DA9CE;
+  --color-tool: #9DC141;
+  --color-signal: #BD3052;
+}
+
+html,
+body {
+  background-color: var(--color-night-950);
+  color: var(--color-ink-100);
+}

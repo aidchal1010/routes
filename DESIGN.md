@@ -26,7 +26,7 @@ The site is grounded in Anthropic's "Building Effective Agents" framework (Schlu
 
 - Tab 2: The Builder — drag-and-drop sandbox where users sketch their own workflow
 - Phase-mode exploration (walk through the 7 phases of building an agent)
-- Evals as a 8th phase
+- Evals as an 8th phase
 - Animation play/pause controls
 
 ---
@@ -35,15 +35,68 @@ The site is grounded in Anthropic's "Building Effective Agents" framework (Schlu
 
 | Concept | Visual element | Reasoning |
 |---|---|---|
-| **Orchestrator** | Airport (central hub) | The big terminal where every task starts. Largest structure, central position. |
-| **Manager** | Train terminus / hub station with multiple tracks fanning out | A regional hub that receives high-level tasks and dispatches to many workers in parallel. |
-| **Worker** | Small two-platform station | A focused stop where one specific task happens. Stateless — train arrives, work happens, train leaves. |
+| **Orchestrator** | Airport (central hub) | The big terminal where every task starts and where final results are synthesized. Largest structure, central position. The *only* node that coordinates between managers. |
+| **Manager** | Train terminus / hub station with multiple tracks fanning out | A regional hub that receives high-level tasks from the orchestrator and dispatches to many workers in parallel. Owns a single domain. **Managers do not communicate with each other.** |
+| **Worker** | Small two-platform station | A focused stop where one specific task happens. Stateless — train arrives, work happens, train leaves. Belongs to exactly one manager. |
 | **Plane** | Task assignment from Orchestrator → Manager | Long-haul, flies in arcs over the world. Visible from far away. |
 | **Train** | Task dispatch from Manager → Workers | Multi-car articulated train; each car represents one parallel sub-task. |
 | **Tools / Ground crew** | Trucks, baggage handlers, fuel trucks | Support vehicles that move between buildings doing deterministic work. Visually distinct from passenger vehicles to reinforce *tools do, agents decide*. |
 | **Memory** | Depot / warehouse | Where state persists. Things go in and come back out later. |
 | **Guardrails** | Security checkpoints / gates | Inspection points data passes through. |
 | **Logging / Observability** | Control tower | Watches over everything, records what happens. |
+
+---
+
+## Architectural rules (visible in the layout)
+
+These rules govern how the world is structured. They are not decoration — they reflect how production agentic systems should actually be built.
+
+1. **One orchestrator.** A single airport sits at the center of the world. It is the only node that sees the full picture and the only node that synthesizes final output.
+
+2. **Four managers, fully independent.** The default world has **4 managers** arranged around the airport. Each owns a distinct domain. **Managers never communicate with each other.** There are no direct routes between train hubs — only routes from each hub back to the airport. This visual rule (no manager-to-manager track) teaches a real architectural principle: cross-manager coordination is the orchestrator's job, not the managers' job. If two managers need shared context, that's a signal the orchestrator should be doing the work, not the managers.
+
+3. **Workers belong to exactly one manager.** Each worker station sits on tracks that lead back to a single train hub. Workers are never shared between managers.
+
+4. **Dependent work stays within a manager.** If subtasks depend on each other's output, they run on the same manager's tracks (sequentially along one line). If subtasks are independent, they fan out across that manager's parallel tracks. **Dependencies never cross manager boundaries** — if they would, the orchestrator should have decomposed differently.
+
+5. **Decisions flow up, execution flows down.** Workers never make judgment calls — they execute. Managers don't synthesize cross-domain results — they delegate within their domain and report back. The orchestrator is the only node that makes cross-domain decisions.
+
+6. **Tools sit at the worker level.** Ground crew vehicles operate around worker stations, not at the manager or orchestrator level. Tools are deterministic — they do, they don't decide.
+
+### Why this matters
+
+Most people designing agent hierarchies make one of two mistakes: either they create a monolithic agent that does everything (no managers), or they let managers talk to each other (which creates tangled coordination and lost context). The visual rule "no track between hubs" is a memorable way to internalize the correct principle: **if managers need to coordinate, the orchestrator should be the one doing it.**
+
+---
+
+## Default world layout
+
+```
+                    ┌─────────────┐
+                    │   AIRPORT   │   ← Orchestrator (center)
+                    │ (Orchestr.) │
+                    └──────┬──────┘
+                           │
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+   ✈ ───┴───✈        ✈ ────┴────✈        ✈───┴───✈
+   │                  │                  │             ✈
+┌──▼──┐            ┌──▼──┐            ┌──▼──┐       ┌──▼──┐
+│ HUB │            │ HUB │            │ HUB │       │ HUB │   ← 4 Managers (NW, NE, SW, SE)
+│  A  │            │  B  │            │  C  │       │  D  │
+└──┬──┘            └──┬──┘            └──┬──┘       └──┬──┘
+   │                  │                  │             │
+ 🚆🚆🚆            🚆🚆🚆            🚆🚆🚆           🚆🚆🚆
+ │ │ │              │ │ │              │ │ │           │ │ │
+ W W W              W W W              W W W           W W W   ← Workers
+
+        No tracks connect HUB A ↔ HUB B ↔ HUB C ↔ HUB D
+        Only routes: Airport ↔ each Hub, and each Hub ↔ its own Workers
+```
+
+Each hub has 2-3 worker stations under it. Trains run between hubs and their workers. Planes run between the airport and each hub. Ground crew vehicles operate around the worker stations.
+
+---
 
 ## Why this metaphor works
 
@@ -52,6 +105,7 @@ The site is grounded in Anthropic's "Building Effective Agents" framework (Schlu
 3. **Flow direction is visible.** Vehicles travel along routes. You can see data move.
 4. **"Tools do, agents decide" is visible.** Ground crew doesn't make decisions — dispatch does. This visually reinforces the most important architectural principle.
 5. **Different vehicle types = different layers of hierarchy.** Planes vs trains vs trucks read at a glance.
+6. **Manager independence is visible.** No tracks between hubs makes the isolation principle obvious at first glance.
 
 ---
 
@@ -59,12 +113,12 @@ The site is grounded in Anthropic's "Building Effective Agents" framework (Schlu
 
 These come from the Anthropic "Building Effective Agents" taxonomy. Each will have a route through the world that highlights when the user selects it.
 
-1. **Prompt Chaining** — Single train going station → station → station. Linear track. Output of one feeds the next.
-2. **Routing** — A train arrives at a switch (classifier), gets routed to one specific specialist line.
-3. **Parallelization** — Multiple train cars splitting at a junction, all firing simultaneously. Two variants: sectioning (split work) and voting (same work, multiple times, aggregate).
-4. **Orchestrator-Workers** — Plane lands at a hub, hub dispatches multiple trains fanning out to workers. *This is the default view of the world.*
-5. **Evaluator-Optimizer** — A train loops back to its origin until cleared. Generator → Evaluator → Generator until quality threshold met.
-6. **Autonomous Agent** — A single train choosing its own route, visiting tool-depots as needed, deciding when it's done.
+1. **Prompt Chaining** — Single train going station → station → station along one manager's track. Linear, sequential. Output of one feeds the next.
+2. **Routing** — A train arrives at a manager's switch (classifier), gets routed to one specific specialist worker line within that manager's domain.
+3. **Parallelization** — Multiple worker stations under one manager all fire simultaneously. Two variants: sectioning (split work across workers) and voting (same work, multiple workers, aggregate at the manager).
+4. **Orchestrator-Workers** — Planes land at multiple hubs, each hub dispatches multiple trains fanning out to workers. *This is the default view of the world.*
+5. **Evaluator-Optimizer** — A train loops back to its origin worker until cleared. Generator worker → Evaluator worker → Generator until quality threshold met. Lives entirely within one manager.
+6. **Autonomous Agent** — A single train choosing its own route within a manager's domain, visiting tool-depots as needed, deciding when it's done.
 
 ---
 
@@ -91,8 +145,8 @@ Each building type needs the side panel content written out. Initial set:
 - **Orchestrator** (Airport)
 - **Manager** (Train hub)
 - **Worker** (Local station)
-- **Router** (Train switch)
-- **Evaluator** (Quality control depot)
+- **Router** (Train switch — within a manager)
+- **Evaluator** (Quality control worker — within a manager)
 - **Tool** (Ground crew vehicle)
 - **Memory** (Warehouse / depot)
 - **Guardrail** (Security gate)
@@ -204,25 +258,26 @@ routes/
 
 ### Phase 3 — Connect the world (day 2, first half)
 10. Route component (curved paths between buildings)
-11. Plane component + animation (arc flight)
-12. Train component + animation (along track)
-13. Compose full world: 1 airport, 3 hubs, ~9 workers, routes between them
+11. Plane component + animation (arc flight from airport to hubs)
+12. Train component + animation (along tracks from hub to workers)
+13. Compose full world: 1 airport, **4 hubs**, 2-3 workers per hub (8-12 workers total), routes between them
+14. **No tracks between hubs** — enforce the manager independence rule visually
 
 ### Phase 4 — Interactivity (day 2, second half)
-14. SidePanel component (slides in on click)
-15. PatternMenu component
-16. Wire up click-to-open-panel for each building type
-17. Write MDX content for each node
-18. Pattern highlighting (selecting a pattern highlights its route)
+15. SidePanel component (slides in on click)
+16. PatternMenu component
+17. Wire up click-to-open-panel for each building type
+18. Write MDX content for each node
+19. Pattern highlighting (selecting a pattern highlights its route)
 
 ### Phase 5 — Polish & ship
-19. Bloom/postprocessing for the glow
-20. Ambient vehicle motion
-21. Legend component
-22. Polish intro screen
-23. Write README with screenshots
-24. Deploy to Vercel
-25. Write LinkedIn post
+20. Bloom/postprocessing for the glow
+21. Ambient vehicle motion
+22. Legend component
+23. Polish intro screen
+24. Write README with screenshots
+25. Deploy to Vercel
+26. Write LinkedIn post
 
 ---
 
@@ -245,3 +300,4 @@ When building any 3D component, Claude Code should look at the matching referenc
 3. **Iterate visually.** Build one component, see it render, refine before moving on. Don't build five things blind.
 4. **The diagram teaches the lesson.** Every visual choice should reinforce something true about agentic systems. If a visual is just decoration, cut it.
 5. **Ship the spine first, polish later.** Get the full world rendering with placeholders before perfecting any single piece.
+6. **Respect architectural truth.** Visual choices (like "no track between hubs") must reflect real principles. Don't fudge the architecture for prettier visuals.
