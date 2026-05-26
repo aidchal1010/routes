@@ -41,3 +41,11 @@
 - Day 2 pivot to top-down SVG, Mini Motorways-as-cars (not trains) metaphor.
 - Cars-on-roads metaphor fits agent behavior better than trains-on-tracks (dispatches are dynamic, not scheduled).
 - All visual references for the new direction in references/mini-motorways-v2/.
+
+## Polish pass (do near end of project, before deploy)
+
+- **Building shadows** — every building gets a long diagonal shadow (~30-45° offset, dark, soft edges). 
+  Implementation: shared `<Shadow>` SVG filter or single shadow group composed once and reused. 
+  Reference: see building-shapes.png in references/mini-motorways-v2/ — note the strong diagonal 
+  shadow under the yellow building. This is what makes Mini Motorways look polished. Apply globally 
+  to all buildings at once rather than per-building.
