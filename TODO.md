@@ -49,3 +49,11 @@
   Reference: see building-shapes.png in references/mini-motorways-v2/ — note the strong diagonal 
   shadow under the yellow building. This is what makes Mini Motorways look polished. Apply globally 
   to all buildings at once rather than per-building.
+
+## Design principle (set during Phase A → B transition)
+
+**Use Mini Motorways as visual vocabulary, not a template to copy.**
+- The reference gives us: rounded buildings, curved roads, top-down view, dark night mode, vivid color accents.
+- Our additions that already differentiate: blueprint grid, monospace labels, airports, runway, multi-type buildings (memory, guardrails, logger), pattern highlighting, click-to-explore.
+- When designing each new building: ask "what's Routes' version of this?" not "how do I match Mini Motorways exactly?"
+- The Airport (Phase B) is the easiest divergence — Mini Motorways has no airports. Use it to set the Routes-specific visual language.
