@@ -2,8 +2,8 @@ import { palette } from "@/lib/palette";
 import PlaneIcon from "./PlaneIcon";
 
 export default function Airport() {
-  const cx = 1800;
-  const cy = 1200;
+  const cx = 2200;
+  const cy = 1400;
 
   return (
     <g>
@@ -71,10 +71,10 @@ export default function Airport() {
 
       <text
         x={cx}
-        y={cy + 155}
+        y={cy + 195}
         textAnchor="middle"
         fontFamily="monospace"
-        fontSize={14}
+        fontSize={28}
         letterSpacing={2}
         fill={palette.ink400}
       >

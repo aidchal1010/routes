@@ -1,16 +1,20 @@
 "use client";
 
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import { WORLD_VIEWBOX } from "@/lib/world-layout";
+import { MANAGERS, WORKERS, WORKER_LABELS, WORLD_VIEWBOX } from "@/lib/world-layout";
+import { palette } from "@/lib/palette";
 import GridBackground from "./GridBackground";
 import Airport from "./Airport";
+import Manager from "./Manager";
+import Worker from "./Worker";
 
 export default function Map() {
   return (
     <TransformWrapper
       minScale={0.3}
       maxScale={4}
-      initialScale={0.5}
+      initialScale={0.9}
+      centerOnInit
       limitToBounds={false}
       doubleClick={{ disabled: true }}
     >
@@ -26,6 +30,35 @@ export default function Map() {
         >
           <GridBackground />
           <Airport />
+          {MANAGERS.map(({ id, ...config }) => (
+            <Manager key={id} {...config} />
+          ))}
+          {WORKERS.map((worker) => {
+            const manager = MANAGERS.find((m) => m.id === worker.managerId)!;
+            return (
+              <Worker
+                key={worker.id}
+                position={worker.position}
+                colorBase={manager.colorBase}
+                colorMid={manager.colorMid}
+                colorDeep={manager.colorDeep}
+              />
+            );
+          })}
+          {WORKER_LABELS.map((l) => (
+            <text
+              key={l.managerId}
+              x={l.position.cx}
+              y={l.position.cy}
+              textAnchor="middle"
+              fontFamily="monospace"
+              fontSize={28}
+              letterSpacing={2}
+              fill={palette.ink400}
+            >
+              WORKERS
+            </text>
+          ))}
         </svg>
       </TransformComponent>
     </TransformWrapper>
