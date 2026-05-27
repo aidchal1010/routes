@@ -61,3 +61,19 @@
 ## Polish (revisit during deploy prep)
 
 - **Grid edges visible at max zoom-out.** Currently the grid is a finite rect (20× viewBox). At max zoom-out you can see the rect's edges. Tried several fixes; works in practice during normal use (zoomed to building level) but feels wrong on max zoom-out. Possible solutions to try later: render grid as a separate full-screen layer outside the pan/zoom transform (via CSS background), or constrain pan/zoom limits so users can't reach the rect edges.
+
+## Architectural accuracy note (apply in Phase G content writing)
+
+We checked against Anthropic's "Building Effective Agents" paper. Findings:
+- The paper has 5 workflow patterns + 1 agent pattern.
+- Orchestrator-workers pattern in the paper: orchestrator → workers directly. NO manager tier.
+- Our "manager" tier is an extension representing what production multi-agent systems look like.
+- Technically, our default world is "orchestrator-workers composed hierarchically" — a pattern composition that the paper acknowledges as common but doesn't name.
+
+Decision: keep "manager" as friendly UI language (vs. "sub-orchestrator"). In Phase G educational content, be precise:
+- Manager = a domain-specific sub-orchestrator
+- Acknowledge this is pattern composition, not a single named pattern from the paper
+- Teach the no-peer-coordination rule as a deliberate architectural principle (with reasoning)
+- Cite the paper as our foundation while being honest that managers extend it
+
+This makes the project both accessible AND honest. Don't pretend "manager" is in the paper; do explain why our model represents real production patterns.
