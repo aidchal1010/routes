@@ -77,3 +77,11 @@ Decision: keep "manager" as friendly UI language (vs. "sub-orchestrator"). In Ph
 - Cite the paper as our foundation while being honest that managers extend it
 
 This makes the project both accessible AND honest. Don't pretend "manager" is in the paper; do explain why our model represents real production patterns.
+
+## Car colors (Phase F implementation)
+
+Cars are color-coded to encode flow direction:
+- Outbound car (manager → worker, carrying a task): manager's color (colorBase)
+- Inbound car (worker → manager, returning a result): worker's color (slightly lighter than manager)
+
+Same logic as planes (outbound colored by destination, inbound represents result coming back). Implement when building Car.tsx in Phase F.
