@@ -104,3 +104,7 @@ Same logic as planes (outbound colored by destination, inbound represents result
 - Motion system needs a "paused" global state that all animations subscribe to
 - Cars/planes track their progress along their path (0.0 to 1.0) so they can pause AT that exact position and resume from there
 - Probably a React context (PauseContext) or zustand store
+
+## Polish item (revisit during Phase H deploy prep)
+
+- **Grid edges still slightly visible** at default zoom even after 50× expansion. Tried multiple approaches (multiplier expansion, hardcoded large rect). Works in practice during normal use but still has thin dark border around the world's outer edges. Options for later: render grid as CSS background outside the SVG entirely, or constrain pan limits so users can't reach the rect edges.
