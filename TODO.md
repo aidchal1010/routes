@@ -85,3 +85,22 @@ Cars are color-coded to encode flow direction:
 - Inbound car (worker → manager, returning a result): worker's color (slightly lighter than manager)
 
 Same logic as planes (outbound colored by destination, inbound represents result coming back). Implement when building Car.tsx in Phase F.
+
+## Phase G interaction model (locked decision)
+
+**Universal click-to-pause behavior:**
+- Click anything (building, car, plane, road) → all motion globally pauses
+- A popup (not a new tab) shows an explanation contextual to what was clicked
+- Closing the popup resumes all motion from where it paused
+
+**What clicks reveal:**
+- Building click: explanation of the node type (orchestrator/manager/worker/etc.), what it does, what's inside, model recommendations, common mistakes
+- Car click: the specific task/dispatch this car represents — e.g., "task sent from Manager A to Worker A2: manager needs database data, requesting from database worker"
+- Plane click: the specific dispatch from orchestrator to manager — e.g., "orchestrator dispatching research task to Manager B (data analysis specialist)"
+- Road click: the dispatch pattern represented by this connection
+- Flight path click: the orchestrator↔manager communication pattern
+
+**Implementation requirement for Phase F:**
+- Motion system needs a "paused" global state that all animations subscribe to
+- Cars/planes track their progress along their path (0.0 to 1.0) so they can pause AT that exact position and resume from there
+- Probably a React context (PauseContext) or zustand store
