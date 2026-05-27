@@ -1,11 +1,20 @@
 "use client";
 
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import { MANAGERS, WORKERS, WORKER_LABELS, WORLD_VIEWBOX } from "@/lib/world-layout";
+import {
+  FLIGHT_PATHS,
+  MANAGERS,
+  ROADS,
+  WORKERS,
+  WORKER_LABELS,
+  WORLD_VIEWBOX,
+} from "@/lib/world-layout";
 import { palette } from "@/lib/palette";
 import GridBackground from "./GridBackground";
 import Airport from "./Airport";
+import FlightPath from "./FlightPath";
 import Manager from "./Manager";
+import Road from "./Road";
 import Worker from "./Worker";
 
 export default function Map() {
@@ -29,6 +38,12 @@ export default function Map() {
           preserveAspectRatio="xMidYMid meet"
         >
           <GridBackground />
+          {ROADS.map((r) => (
+            <Road key={r.id} d={r.d} />
+          ))}
+          {FLIGHT_PATHS.map((f) => (
+            <FlightPath key={f.id} d={f.d} color={f.color} />
+          ))}
           <Airport />
           {MANAGERS.map(({ id, ...config }) => (
             <Manager key={id} {...config} />
@@ -39,9 +54,9 @@ export default function Map() {
               <Worker
                 key={worker.id}
                 position={worker.position}
-                colorBase={manager.colorBase}
-                colorMid={manager.colorMid}
-                colorDeep={manager.colorDeep}
+                colorBase={manager.colorIcon}
+                colorMid={manager.colorBase}
+                colorDeep={manager.colorMid}
               />
             );
           })}

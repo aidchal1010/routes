@@ -6,6 +6,7 @@ export const palette = {
   ink400: "#9BA1AB",
   terminal: "#E8E4DA",
   grid: "#4A5566",
+  roadGrey: "#3A4452",
   orchestrator: "#9325F0",
   orchestratorBase: "#5B14A8",
   orchestratorDeep: "#3A0A6C",
