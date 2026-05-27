@@ -108,3 +108,17 @@ Same logic as planes (outbound colored by destination, inbound represents result
 ## Polish item (revisit during Phase H deploy prep)
 
 - **Grid edges still slightly visible** at default zoom even after 50× expansion. Tried multiple approaches (multiplier expansion, hardcoded large rect). Works in practice during normal use but still has thin dark border around the world's outer edges. Options for later: render grid as CSS background outside the SVG entirely, or constrain pan limits so users can't reach the rect edges.
+
+## Architectural accuracy note (informs Phase G educational content)
+
+Our visual model in Anthropic-paper terms:
+- "Orchestrator" = the lead agent that decomposes queries
+- "Manager" = a specialized sub-orchestrator (the paper doesn't have this layer explicitly — managers are "specialized subagents that further decompose")
+- "Worker" = leaf subagent that does atomic work
+- Our pattern = "orchestrator-workers composed hierarchically"
+
+This is more accurate than calling it "the orchestrator-worker pattern" — that name refers to a specific 2-layer pattern in the paper. Ours is the pattern *composed*.
+
+For Phase G educational popups: explain the manager layer as "domain-specific sub-orchestrators that decompose their slice of the problem and dispatch to specialized workers." Be explicit that this is a *composition* of the named pattern.
+
+Future design decisions about how the visualization REPRESENTS agentic behavior should be researched against Anthropic's published patterns before committing.
