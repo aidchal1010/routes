@@ -9,7 +9,7 @@ export default function Road({ d }: Props) {
     <path
       d={d}
       stroke={palette.roadGrey}
-      strokeWidth={32}
+      strokeWidth={80}
       strokeLinecap="round"
       fill="none"
     />

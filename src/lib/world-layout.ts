@@ -1,6 +1,6 @@
 import { palette } from "./palette";
 
-export const WORLD_VIEWBOX = { width: 4400, height: 2800 } as const;
+export const WORLD_VIEWBOX = { x: -50, y: -100, width: 4500, height: 3000 } as const;
 
 export type IconShape = "circle" | "triangle" | "square" | "diamond";
 
@@ -70,24 +70,24 @@ export type WorkerLabelConfig = {
 };
 
 export const WORKERS: readonly WorkerConfig[] = [
-  { id: "worker-a1", position: { cx: 1850, cy: 140 }, managerId: "manager-a" },
-  { id: "worker-a2", position: { cx: 2200, cy: 60 }, managerId: "manager-a" },
-  { id: "worker-a3", position: { cx: 2550, cy: 140 }, managerId: "manager-a" },
-  { id: "worker-b1", position: { cx: 4250, cy: 1230 }, managerId: "manager-b" },
-  { id: "worker-b2", position: { cx: 4250, cy: 1570 }, managerId: "manager-b" },
-  { id: "worker-c1", position: { cx: 1700, cy: 2720 }, managerId: "manager-c" },
-  { id: "worker-c2", position: { cx: 1950, cy: 2630 }, managerId: "manager-c" },
-  { id: "worker-c3", position: { cx: 2450, cy: 2630 }, managerId: "manager-c" },
-  { id: "worker-c4", position: { cx: 2700, cy: 2720 }, managerId: "manager-c" },
-  { id: "worker-d1", position: { cx: 150, cy: 1230 }, managerId: "manager-d" },
-  { id: "worker-d2", position: { cx: 150, cy: 1570 }, managerId: "manager-d" },
+  { id: "worker-a1", position: { cx: 1745, cy: 77 }, managerId: "manager-a" },
+  { id: "worker-a2", position: { cx: 2200, cy: -27 }, managerId: "manager-a" },
+  { id: "worker-a3", position: { cx: 2655, cy: 77 }, managerId: "manager-a" },
+  { id: "worker-b1", position: { cx: 4370, cy: 1179 }, managerId: "manager-b" },
+  { id: "worker-b2", position: { cx: 4370, cy: 1621 }, managerId: "manager-b" },
+  { id: "worker-c1", position: { cx: 1550, cy: 2801 }, managerId: "manager-c" },
+  { id: "worker-c2", position: { cx: 1875, cy: 2684 }, managerId: "manager-c" },
+  { id: "worker-c3", position: { cx: 2525, cy: 2684 }, managerId: "manager-c" },
+  { id: "worker-c4", position: { cx: 2850, cy: 2801 }, managerId: "manager-c" },
+  { id: "worker-d1", position: { cx: 30, cy: 1179 }, managerId: "manager-d" },
+  { id: "worker-d2", position: { cx: 30, cy: 1621 }, managerId: "manager-d" },
 ] as const;
 
 export const WORKER_LABELS: readonly WorkerLabelConfig[] = [
-  { managerId: "manager-a", position: { cx: 2200, cy: 200 } },
-  { managerId: "manager-b", position: { cx: 4250, cy: 1100 } },
-  { managerId: "manager-c", position: { cx: 2200, cy: 2790 } },
-  { managerId: "manager-d", position: { cx: 150, cy: 1100 } },
+  { managerId: "manager-a", position: { cx: 2200, cy: 178 } },
+  { managerId: "manager-b", position: { cx: 4310, cy: 1055 } },
+  { managerId: "manager-c", position: { cx: 2200, cy: 2841 } },
+  { managerId: "manager-d", position: { cx: 90, cy: 1055 } },
 ] as const;
 
 export type FlightPathConfig = {
@@ -166,25 +166,25 @@ export const FLIGHT_PATHS: readonly FlightPathConfig[] = [
 
 export const ROADS: readonly RoadConfig[] = [
   { id: "road-a-a1", managerId: "manager-a", workerId: "worker-a1",
-    d: "M 2200 350 C 2050 250, 1900 200, 1850 140" },
+    d: "M 2200 350 C 2005 220, 1810 155, 1745 77" },
   { id: "road-a-a2", managerId: "manager-a", workerId: "worker-a2",
-    d: "M 2200 350 C 2250 250, 2200 150, 2200 60" },
+    d: "M 2200 350 C 2265 220, 2200 90, 2200 -27" },
   { id: "road-a-a3", managerId: "manager-a", workerId: "worker-a3",
-    d: "M 2200 350 C 2350 250, 2500 200, 2550 140" },
+    d: "M 2200 350 C 2395 220, 2590 155, 2655 77" },
   { id: "road-b-b1", managerId: "manager-b", workerId: "worker-b1",
-    d: "M 3850 1400 C 4050 1400, 4200 1300, 4250 1230" },
+    d: "M 3850 1400 C 4110 1400, 4305 1270, 4370 1179" },
   { id: "road-b-b2", managerId: "manager-b", workerId: "worker-b2",
-    d: "M 3850 1400 C 4050 1400, 4200 1500, 4250 1570" },
+    d: "M 3850 1400 C 4110 1400, 4305 1530, 4370 1621" },
   { id: "road-c-c1", managerId: "manager-c", workerId: "worker-c1",
-    d: "M 2200 2450 C 1950 2550, 1750 2650, 1700 2720" },
+    d: "M 2200 2450 C 1875 2580, 1615 2710, 1550 2801" },
   { id: "road-c-c2", managerId: "manager-c", workerId: "worker-c2",
-    d: "M 2200 2450 C 2100 2550, 1980 2600, 1950 2630" },
+    d: "M 2200 2450 C 2070 2580, 1914 2645, 1875 2684" },
   { id: "road-c-c3", managerId: "manager-c", workerId: "worker-c3",
-    d: "M 2200 2450 C 2300 2550, 2420 2600, 2450 2630" },
+    d: "M 2200 2450 C 2330 2580, 2486 2645, 2525 2684" },
   { id: "road-c-c4", managerId: "manager-c", workerId: "worker-c4",
-    d: "M 2200 2450 C 2450 2550, 2650 2650, 2700 2720" },
+    d: "M 2200 2450 C 2525 2580, 2785 2710, 2850 2801" },
   { id: "road-d-d1", managerId: "manager-d", workerId: "worker-d1",
-    d: "M 550 1400 C 350 1400, 200 1300, 150 1230" },
+    d: "M 550 1400 C 290 1400, 95 1270, 30 1179" },
   { id: "road-d-d2", managerId: "manager-d", workerId: "worker-d2",
-    d: "M 550 1400 C 350 1400, 200 1500, 150 1570" },
+    d: "M 550 1400 C 290 1400, 95 1530, 30 1621" },
 ] as const;

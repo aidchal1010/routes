@@ -1,5 +1,4 @@
 import { palette } from "@/lib/palette";
-import { WORLD_VIEWBOX } from "@/lib/world-layout";
 
 export default function GridBackground() {
   return (
@@ -21,10 +20,10 @@ export default function GridBackground() {
         </pattern>
       </defs>
       <rect
-        x={-WORLD_VIEWBOX.width * 10}
-        y={-WORLD_VIEWBOX.height * 10}
-        width={WORLD_VIEWBOX.width * 20}
-        height={WORLD_VIEWBOX.height * 20}
+        x={-50000}
+        y={-50000}
+        width={100000}
+        height={100000}
         fill="url(#blueprint-grid)"
       />
     </g>
