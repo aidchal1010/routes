@@ -122,3 +122,36 @@ This is more accurate than calling it "the orchestrator-worker pattern" — that
 For Phase G educational popups: explain the manager layer as "domain-specific sub-orchestrators that decompose their slice of the problem and dispatch to specialized workers." Be explicit that this is a *composition* of the named pattern.
 
 Future design decisions about how the visualization REPRESENTS agentic behavior should be researched against Anthropic's published patterns before committing.
+
+## Phase G addition — Legend/Key UI (top-right)
+
+A persistent legend in the top-right corner that explains the visual vocabulary without requiring clicks.
+
+**Behavior:**
+- Collapsed state: small button/tab with an arrow indicator (▶ or chevron)
+- Click the arrow → expands into a panel showing the key
+- Does NOT pause motion (unlike click-to-popup behavior on world elements)
+- Click again or click an X to collapse
+- Stays in top-right corner regardless of pan/zoom on the world (UI overlay, not in SVG)
+
+**Contents (visual key — what each shape/color means):**
+- Orchestrator (purple airport icon) → "Lead agent that decomposes tasks"
+- Manager (4 colored shapes: cyan circle, orange triangle, green square, pink diamond) → "Specialized sub-orchestrators"
+- Worker (small lighter-shade square) → "Leaf agent that executes atomic tasks"
+- Plane (outbound colored / inbound purple) → "Task dispatch / result return between orchestrator and managers"
+- Car (outbound saturated / inbound light) → "Subtask dispatch / result return between managers and workers"
+- Road (thick grey) → "Manager-to-worker dispatch channel"
+- Flight path (dashed colored line) → "Orchestrator-to-manager communication channel"
+
+**Visual style:**
+- Same dark theme as the world (palette.night950 background, palette.terminal text)
+- Monospace font (matches existing labels)
+- Subtle border or shadow to separate from world
+- Width when expanded: ~280-320px
+- Each row: small icon swatch + short label + ~1 sentence explanation
+
+**Implementation notes:**
+- Not part of the SVG — positioned as absolute HTML overlay over the TransformWrapper
+- Built as a separate component: `src/components/map/Legend.tsx`
+- State (open/closed) local to component, no global state needed
+- Doesn't subscribe to pause context (motion continues whether legend is open or closed)
