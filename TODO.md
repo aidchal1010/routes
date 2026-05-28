@@ -155,3 +155,51 @@ A persistent legend in the top-right corner that explains the visual vocabulary 
 - Built as a separate component: `src/components/map/Legend.tsx`
 - State (open/closed) local to component, no global state needed
 - Doesn't subscribe to pause context (motion continues whether legend is open or closed)
+
+## Phase G — Popup content structure (locked decision)
+
+Each popup has TWO tabs:
+
+**Default tab — "Overview"** (for mixed audience, leans accessible)
+- Title (the element's name)
+- What it is — plain-language description using analogy
+- What it does — its role in the system
+- A concrete example (e.g., "An orchestrator might break a research question into 3 parallel searches")
+
+**Advanced tab — "Components (Advanced)"** (for engineers / those wanting to build)
+- Components — the actual building blocks (e.g., for a manager: model + system prompt + decomposition logic + worker registry + result synthesis prompt)
+- Implementation — how to build it (Claude SDK patterns, code structure, API setup)
+- Production considerations — caching, retries, error handling, observability, common pitfalls
+- Reference — links to relevant Anthropic docs or paper sections
+
+**UI behavior:**
+- Tabs at top of popup (Overview | Components (Advanced))
+- Default to Overview when opening any popup
+- Tab state resets when popup closes — next click starts on Overview again
+- Tab styling: subtle underline or color shift on active tab
+
+**Content storage:**
+- TypeScript object per element type with both "overview" and "advanced" fields
+- Each field is structured (not freeform prose) so the popup layout stays consistent
+- Example structure:
+```ts
+  type ElementContent = {
+    title: string;
+    overview: {
+      whatItIs: string;
+      whatItDoes: string;
+      example: string;
+    };
+    advanced: {
+      components: string[]; // bullet list
+      implementation: string;
+      production: string[];
+      references?: { label: string; url: string }[];
+    };
+  };
+```
+
+**Writing principle:**
+- Default tab: explainable to a smart non-engineer in 30 seconds
+- Advanced tab: useful to an engineer who wants to actually build this
+- Never repeat content between tabs — each tab earns its own real estate
