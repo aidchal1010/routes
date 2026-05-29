@@ -203,3 +203,30 @@ Each popup has TWO tabs:
 - Default tab: explainable to a smart non-engineer in 30 seconds
 - Advanced tab: useful to an engineer who wants to actually build this
 - Never repeat content between tabs — each tab earns its own real estate
+
+## Phase G — Layer 1 expanded scope (app chrome)
+
+Split Layer 1 into:
+
+**Layer 1a — Core interaction (build first):**
+- Popup UI design
+- Pause system (technical keystone)
+- Popup shell component
+- Click handlers on buildings
+- Click handlers on vehicles
+
+**Layer 1b — App chrome (build after core works):**
+- TOP BAR (persistent horizontal strip, outside SVG, stays during pan/zoom)
+  - Contains: key/legend, search box, sandbox button
+  - Design decision pending: full top bar vs floating top-right panel
+- KEY/LEGEND — now lives in the top bar (was: floating top-right). Static visual vocabulary. Does NOT pause motion.
+- INTRO/WELCOME POPUP — appears on entering /framework, explains the project. Use localStorage to show once (real Next.js app, so persistence works). Dismissible.
+- SEARCH BOX — "What component do you want to look for?"
+  - Layer 1: UI placeholder only (looks real, no behavior)
+  - Behavior TBD (pan-to-element? open popup? filter/dim?) — design in later phase
+- SANDBOX BUTTON — placeholder labeled "Builder (coming soon)", sets up v2 feature
+
+**Design session needed before coding Layer 1b:**
+- Top bar layout: height, left-to-right contents, visual style
+- Confirm top bar vs floating panel for the key
+- Search behavior model (separate decision)
