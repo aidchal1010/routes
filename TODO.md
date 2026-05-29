@@ -230,3 +230,16 @@ Split Layer 1 into:
 - Top bar layout: height, left-to-right contents, visual style
 - Confirm top bar vs floating panel for the key
 - Search behavior model (separate decision)
+
+## Phase G — Search behavior (refined decision)
+
+Search opens the matching element's popup directly — reuses the existing popup system, not a separate results UI.
+
+- User types an element name (e.g. "orchestrator", "worker", "manager")
+- Matching → opens that element's popup (same popup as clicking the element in the world)
+- Search-triggered popups DO pause the world (consistency — a popup is a popup regardless of how it's opened)
+- No pan-to-element, no highlight, no filter/dim — just open the popup
+
+Implementation: search maps a query string → an element content key → opens popup with that content. Trivial once the popup + content systems exist. Likely fuzzy-match or simple dropdown of matching element types as you type.
+
+This means search is genuinely easy to build once Layer 1a (popup) + Layer 2 (content) exist. Could even slot into Layer 1b as just the input box, with wiring deferred until content exists.
