@@ -10,6 +10,11 @@ import {
   WORKER_LABELS,
 } from "@/lib/world-layout";
 import { palette } from "@/lib/palette";
+import {
+  createPausableTimeouts,
+  type PausableTimeouts,
+} from "@/lib/pausable-timeouts";
+import { usePause } from "./PauseContext";
 import GridBackground from "./GridBackground";
 import Airport from "./Airport";
 import Car from "./Car";
@@ -85,10 +90,13 @@ export default function Map() {
   const activeCycles = useRef<globalThis.Map<string, Cycle>>(
     new globalThis.Map(),
   );
-  const pendingTimeouts = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const lastCarSpawnAt = useRef<globalThis.Map<string, number>>(
     new globalThis.Map(),
   );
+  const { paused, pause, resume } = usePause();
+  const timersRef = useRef<PausableTimeouts | null>(null);
+  if (!timersRef.current) timersRef.current = createPausableTimeouts();
+  const timers = timersRef.current;
 
   const setActiveCarsBoth = useCallback(
     (updater: (prev: ActiveCar[]) => ActiveCar[]) => {
@@ -113,28 +121,29 @@ export default function Map() {
     [],
   );
 
-  const scheduleSynthesisAndReturn = useCallback((managerId: string) => {
-    const delay = 1000 + Math.random() * 2000;
-    const id = setTimeout(() => {
-      pendingTimeouts.current.delete(id);
-      const inbound = FLIGHT_PATHS.find(
-        (f) => f.managerId === managerId && f.direction === "inbound",
-      );
-      if (!inbound) return;
-      setActivePlanes((prev) =>
-        tryAddPlane(prev, {
-          id: `plane-${Date.now()}-${Math.random()}`,
-          d: inbound.d,
-          color: inbound.color,
-          duration: PLANE_DURATION,
-          direction: "inbound",
-          managerId,
-          pathId: inbound.id,
-        }),
-      );
-    }, delay);
-    pendingTimeouts.current.add(id);
-  }, []);
+  const scheduleSynthesisAndReturn = useCallback(
+    (managerId: string) => {
+      const delay = 1000 + Math.random() * 2000;
+      timers.set(() => {
+        const inbound = FLIGHT_PATHS.find(
+          (f) => f.managerId === managerId && f.direction === "inbound",
+        );
+        if (!inbound) return;
+        setActivePlanes((prev) =>
+          tryAddPlane(prev, {
+            id: `plane-${Date.now()}-${Math.random()}`,
+            d: inbound.d,
+            color: inbound.color,
+            duration: PLANE_DURATION,
+            direction: "inbound",
+            managerId,
+            pathId: inbound.id,
+          }),
+        );
+      }, delay);
+    },
+    [timers],
+  );
 
   const spawnInboundCarReturn = useCallback(
     (roadId: string, cycleId: string, retries = 0) => {
@@ -155,22 +164,18 @@ export default function Map() {
       if (!manager) return;
 
       if (countCarsByDirection("inbound") >= MAX_CARS_PER_DIRECTION) {
-        const retryId = setTimeout(() => {
-          pendingTimeouts.current.delete(retryId);
+        timers.set(() => {
           spawnInboundCarReturn(roadId, cycleId, retries + 1);
         }, 1000);
-        pendingTimeouts.current.add(retryId);
         return;
       }
 
       const key = `${roadId}-inbound`;
       const now = Date.now();
       if (now - (lastCarSpawnAt.current.get(key) ?? 0) < 500) {
-        const retryId = setTimeout(() => {
-          pendingTimeouts.current.delete(retryId);
+        timers.set(() => {
           spawnInboundCarReturn(roadId, cycleId, retries + 1);
         }, 500);
-        pendingTimeouts.current.add(retryId);
         return;
       }
       lastCarSpawnAt.current.set(key, now);
@@ -190,7 +195,7 @@ export default function Map() {
         },
       ]);
     },
-    [countCarsByDirection, scheduleSynthesisAndReturn, setActiveCarsBoth],
+    [countCarsByDirection, scheduleSynthesisAndReturn, setActiveCarsBoth, timers],
   );
 
   const dispatchCycle = useCallback(
@@ -253,21 +258,20 @@ export default function Map() {
         triggeredByPlaneId: planeId,
       });
 
-      const safetyId = setTimeout(() => {
-        pendingTimeouts.current.delete(safetyId);
+      timers.set(() => {
         const stuck = activeCycles.current.get(cycleId);
         if (stuck) {
           activeCycles.current.delete(cycleId);
           scheduleSynthesisAndReturn(managerId);
         }
       }, 60000);
-      pendingTimeouts.current.add(safetyId);
     },
     [
       countCarsByDirection,
       countCarsOnRoad,
       scheduleSynthesisAndReturn,
       setActiveCarsBoth,
+      timers,
     ],
   );
 
@@ -279,13 +283,11 @@ export default function Map() {
       }
       setActivePlanes((prev) => prev.filter((p) => p.id !== id));
       const decompositionDelay = 300 + Math.random() * 500;
-      const decompId = setTimeout(() => {
-        pendingTimeouts.current.delete(decompId);
+      timers.set(() => {
         dispatchCycle(id, managerId);
       }, decompositionDelay);
-      pendingTimeouts.current.add(decompId);
     },
-    [dispatchCycle],
+    [dispatchCycle, timers],
   );
 
   const handleCarComplete = useCallback(
@@ -298,11 +300,9 @@ export default function Map() {
       if (direction === "outbound") {
         setActiveCarsBoth((prev) => prev.filter((c) => c.id !== id));
         const workDelay = 1000 + Math.random() * 2000;
-        const workId = setTimeout(() => {
-          pendingTimeouts.current.delete(workId);
+        timers.set(() => {
           spawnInboundCarReturn(roadId, cycleId);
         }, workDelay);
-        pendingTimeouts.current.add(workId);
         return;
       }
       setActiveCarsBoth((prev) => prev.filter((c) => c.id !== id));
@@ -314,34 +314,49 @@ export default function Map() {
         scheduleSynthesisAndReturn(cycle.managerId);
       }
     },
-    [setActiveCarsBoth, spawnInboundCarReturn, scheduleSynthesisAndReturn],
+    [setActiveCarsBoth, spawnInboundCarReturn, scheduleSynthesisAndReturn, timers],
   );
+
+  // Mirror the global pause flag onto the timeout manager so the causal chain
+  // freezes in lockstep with the vehicle animations (which pause themselves).
+  useEffect(() => {
+    if (paused) timers.pauseAll();
+    else timers.resumeAll();
+  }, [paused, timers]);
 
   // Cleanup on unmount: clear pending timeouts and active cycles.
   useEffect(() => {
-    const timeouts = pendingTimeouts.current;
     const cycles = activeCycles.current;
     return () => {
-      timeouts.forEach(clearTimeout);
-      timeouts.clear();
+      timers.clearAll();
       cycles.clear();
     };
-  }, []);
+  }, [timers]);
 
-  // Plane spawner: every 1.5–3s, fire a burst of 1–3 staggered outbound planes to distinct managers.
+  // TEMP — remove when click handlers land. Spacebar toggles global pause so the
+  // pause system can be verified before Step 3 wires real click-to-pause.
   useEffect(() => {
-    let cancelled = false;
-    let burstTimeoutId: ReturnType<typeof setTimeout>;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      e.preventDefault();
+      if (paused) resume();
+      else pause();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [paused, pause, resume]);
 
+  // Plane spawner: every 1.5–3s, fire a burst of 1–3 staggered outbound planes to
+  // distinct managers. Both the stagger and the next-burst reschedule are managed
+  // timers, so a global pause freezes the spawner with no separate gate.
+  useEffect(() => {
     const spawnBurst = () => {
-      if (cancelled) return;
       const burstSize = pickBurstSize();
       const shuffled = [...OUTBOUND_PATHS].sort(() => Math.random() - 0.5);
       const chosen = shuffled.slice(0, burstSize);
       for (let i = 0; i < chosen.length; i++) {
         const path = chosen[i];
-        const staggerId = setTimeout(() => {
-          pendingTimeouts.current.delete(staggerId);
+        timers.set(() => {
           setActivePlanes((prev) =>
             tryAddPlane(prev, {
               id: `plane-${Date.now()}-${Math.random()}`,
@@ -354,17 +369,13 @@ export default function Map() {
             }),
           );
         }, i * 150);
-        pendingTimeouts.current.add(staggerId);
       }
-      burstTimeoutId = setTimeout(spawnBurst, 1500 + Math.random() * 1500);
+      timers.set(spawnBurst, 1500 + Math.random() * 1500);
     };
 
     spawnBurst();
-    return () => {
-      cancelled = true;
-      clearTimeout(burstTimeoutId);
-    };
-  }, []);
+    // Unmount clearing is handled by the dedicated cleanup effect (timers.clearAll()).
+  }, [timers]);
 
   return (
     <TransformWrapper

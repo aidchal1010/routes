@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { animate, motion, useMotionValue, useTransform } from "framer-motion";
+import { useEffect, useMemo, useRef } from "react";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useTransform,
+  type AnimationPlaybackControls,
+} from "framer-motion";
 import { evaluate, parseBezier } from "@/lib/bezier";
+import { usePause } from "./PauseContext";
 import PlaneIcon from "./PlaneIcon";
 
 type Props = {
@@ -13,7 +20,9 @@ type Props = {
 };
 
 export default function Plane({ d, color, duration, onComplete }: Props) {
+  const { paused } = usePause();
   const progress = useMotionValue(0);
+  const controlsRef = useRef<AnimationPlaybackControls | null>(null);
   const bezier = useMemo(() => parseBezier(d), [d]);
 
   const fadeInEnd = 0.4 / duration;
@@ -34,9 +43,16 @@ export default function Plane({ d, color, duration, onComplete }: Props) {
       ease: "linear",
       onComplete,
     });
+    controlsRef.current = controls;
     return () => controls.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Freeze/resume this vehicle's own animation in step with the global pause flag.
+  useEffect(() => {
+    if (paused) controlsRef.current?.pause();
+    else controlsRef.current?.play();
+  }, [paused]);
 
   return (
     <motion.g style={{ x, y, rotate, opacity }}>

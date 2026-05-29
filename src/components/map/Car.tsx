@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { animate, motion, useMotionValue, useTransform } from "framer-motion";
+import { useEffect, useMemo, useRef } from "react";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useTransform,
+  type AnimationPlaybackControls,
+} from "framer-motion";
 import { evaluate, parseBezier } from "@/lib/bezier";
+import { usePause } from "./PauseContext";
 import CarIcon from "./CarIcon";
 
 type Props = {
@@ -24,8 +31,10 @@ export default function Car({
   direction,
   onComplete,
 }: Props) {
+  const { paused } = usePause();
   const isInbound = direction === "inbound";
   const progress = useMotionValue(isInbound ? 1 : 0);
+  const controlsRef = useRef<AnimationPlaybackControls | null>(null);
   const bezier = useMemo(() => parseBezier(d), [d]);
 
   const fadeInEnd = 0.4 / duration;
@@ -58,9 +67,16 @@ export default function Car({
       ease: "linear",
       onComplete,
     });
+    controlsRef.current = controls;
     return () => controls.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Freeze/resume this vehicle's own animation in step with the global pause flag.
+  useEffect(() => {
+    if (paused) controlsRef.current?.pause();
+    else controlsRef.current?.play();
+  }, [paused]);
 
   return (
     <motion.g style={{ x, y, rotate, opacity }}>
