@@ -17,9 +17,16 @@ type Props = {
   color: string;
   duration: number;
   onComplete: () => void;
+  onSelect?: () => void;
 };
 
-export default function Plane({ d, color, duration, onComplete }: Props) {
+export default function Plane({
+  d,
+  color,
+  duration,
+  onComplete,
+  onSelect,
+}: Props) {
   const { paused } = usePause();
   const progress = useMotionValue(0);
   const controlsRef = useRef<AnimationPlaybackControls | null>(null);
@@ -36,6 +43,8 @@ export default function Plane({ d, color, duration, onComplete }: Props) {
     if (t > fadeOutStart) return (1 - t) / (1 - fadeOutStart);
     return 1;
   });
+  // Ignore clicks while the plane is faint (the brief fade tails).
+  const pointerEvents = useTransform(opacity, (o) => (o < 0.4 ? "none" : "auto"));
 
   useEffect(() => {
     const controls = animate(progress, 1, {
@@ -55,7 +64,15 @@ export default function Plane({ d, color, duration, onComplete }: Props) {
   }, [paused]);
 
   return (
-    <motion.g style={{ x, y, rotate, opacity }}>
+    <motion.g
+      style={{ x, y, rotate, opacity, pointerEvents, cursor: "pointer" }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect?.();
+      }}
+    >
+      {/* Enlarged invisible hit area — easier to click than the thin plane icon. */}
+      <rect x={-55} y={-55} width={110} height={110} fill="transparent" />
       <PlaneIcon size={100} color={color} />
     </motion.g>
   );

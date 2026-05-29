@@ -5,7 +5,14 @@
 
 import type { PanelContent } from "./InfoPanel";
 
-type ElementKind = "orchestrator" | "manager" | "worker";
+type ElementKind =
+  | "orchestrator"
+  | "manager"
+  | "worker"
+  | "plane-outbound"
+  | "plane-inbound"
+  | "car-outbound"
+  | "car-inbound";
 
 export function getPlaceholderContent(
   kind: ElementKind,
@@ -109,6 +116,126 @@ const BODY: Record<ElementKind, (name: string) => Body> = {
         "Make it idempotent/retry-safe so the manager can re-dispatch on failure",
         "Constrain tool access to only what the task needs",
         "Common pitfall: giving a worker too broad a remit — that's a manager's job, not a worker's",
+      ],
+      references: [
+        {
+          label: "Anthropic — Building Effective Agents",
+          url: "https://www.anthropic.com/research/building-effective-agents",
+        },
+      ],
+    },
+  }),
+  "plane-outbound": () => ({
+    overview: {
+      whatItIs:
+        "This plane is a task dispatch — the orchestrator handing one domain-sized task to a manager. The plane's color matches the manager it's headed to.",
+      whatItDoes:
+        "It carries the orchestrator's instruction down to a manager, who will then break it apart for its own workers.",
+      example:
+        "The orchestrator sends a 'analyze Q3 financials' task to the finance manager — that flight is this plane.",
+    },
+    advanced: {
+      components: [
+        "Payload — the task description + any context the manager needs",
+        "Routing — which manager handles this domain (encoded here as the destination)",
+        "Contract — the structured task shape the manager expects",
+      ],
+      implementation:
+        "In code this is the orchestrator calling a manager subagent (or tool) with a scoped task message. The 'flight' is one dispatch in the orchestrator's fan-out; the orchestrator awaits the manager's result before synthesizing.",
+      production: [
+        "Make dispatches independent so managers can run in parallel",
+        "Include only the context a manager needs — over-stuffing the payload wastes tokens",
+        "Tag each dispatch with an id so its returning result can be matched back",
+      ],
+      references: [
+        {
+          label: "Anthropic — Building Effective Agents",
+          url: "https://www.anthropic.com/research/building-effective-agents",
+        },
+      ],
+    },
+  }),
+  "plane-inbound": () => ({
+    overview: {
+      whatItIs:
+        "This plane is a result returning — a manager handing its finished work back up to the orchestrator. Inbound flights are purple, the orchestrator's color.",
+      whatItDoes:
+        "It carries a manager's synthesized result home, where the orchestrator will combine it with the other managers' results.",
+      example:
+        "The finance manager finishes its analysis and sends the summary back up — that return trip is this plane.",
+    },
+    advanced: {
+      components: [
+        "Result — the manager's synthesized output for its domain",
+        "Correlation id — ties this result back to the dispatch that triggered it",
+        "Status — success / partial / error, so the orchestrator can react",
+      ],
+      implementation:
+        "In code this is a manager subagent returning its result to the orchestrator. The orchestrator collects all manager results, then runs its final synthesis pass.",
+      production: [
+        "Return structured results, not free text, so synthesis is reliable",
+        "Surface partial/failed results explicitly instead of silently dropping them",
+        "Keep results concise — the orchestrator pays to read every one",
+      ],
+      references: [
+        {
+          label: "Anthropic — Building Effective Agents",
+          url: "https://www.anthropic.com/research/building-effective-agents",
+        },
+      ],
+    },
+  }),
+  "car-outbound": () => ({
+    overview: {
+      whatItIs:
+        "This car is a subtask — a manager handing one atomic piece of work to a worker. Its color matches the manager that dispatched it.",
+      whatItDoes:
+        "It carries a focused instruction from a manager to one of its workers, who will execute it and return a result.",
+      example:
+        "The finance manager asks a worker to 'pull the revenue table for Q3' — that trip is this car.",
+    },
+    advanced: {
+      components: [
+        "Subtask — the single, focused unit of work for one worker",
+        "Tool hint — which capability the worker should use, if relevant",
+        "Contract — the result shape the manager expects back",
+      ],
+      implementation:
+        "In code this is a manager calling a worker subagent/tool with a narrow task. It's one edge of the manager's fan-out; the manager awaits all worker results before synthesizing.",
+      production: [
+        "Keep subtasks atomic so workers stay simple and parallelizable",
+        "Throttle concurrent dispatches per worker to avoid overload (mirrored here as the road's car cap)",
+        "Tag each subtask so its returning result can be matched back",
+      ],
+      references: [
+        {
+          label: "Anthropic — Building Effective Agents",
+          url: "https://www.anthropic.com/research/building-effective-agents",
+        },
+      ],
+    },
+  }),
+  "car-inbound": () => ({
+    overview: {
+      whatItIs:
+        "This car is a result — a worker returning its finished piece of work to its manager. It's tinted the worker's lighter shade.",
+      whatItDoes:
+        "It carries a worker's output back to the manager, who will combine it with the other workers' results.",
+      example:
+        "The worker returns the Q3 revenue table to the finance manager — that return trip is this car.",
+    },
+    advanced: {
+      components: [
+        "Result — the worker's atomic output",
+        "Correlation id — ties this result back to the subtask that triggered it",
+        "Status — success / error, so the manager can retry if needed",
+      ],
+      implementation:
+        "In code this is a worker subagent returning its result to its manager. Once all of a manager's outstanding workers report back, the manager runs its synthesis pass and returns upward.",
+      production: [
+        "Return structured, schema-validated results so manager synthesis is reliable",
+        "Make workers retry-safe so a manager can re-dispatch a failed subtask",
+        "Surface errors explicitly rather than returning empty results",
       ],
       references: [
         {

@@ -57,7 +57,7 @@ type Cycle = {
 };
 
 const PLANE_DURATION = 6;
-const CAR_DURATION = 3;
+const CAR_DURATION = 4;
 const MAX_OUTBOUND_PLANES = 8;
 const MAX_INBOUND_PLANES = 12;
 const MAX_CARS_PER_DIRECTION = 12;
@@ -464,6 +464,15 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
               onComplete={() =>
                 handleCarComplete(c.id, c.direction, c.roadId, c.cycleId)
               }
+              onSelect={() =>
+                onElementClick(
+                  getPlaceholderContent(
+                    c.direction === "outbound" ? "car-outbound" : "car-inbound",
+                    c.direction === "outbound" ? "SUBTASK" : "RESULT",
+                    c.bodyColor,
+                  ),
+                )
+              }
             />
           ))}
           {activePlanes.map((p) => (
@@ -474,6 +483,15 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
               duration={p.duration}
               onComplete={() =>
                 handlePlaneComplete(p.id, p.direction, p.managerId)
+              }
+              onSelect={() =>
+                onElementClick(
+                  getPlaceholderContent(
+                    p.direction === "outbound" ? "plane-outbound" : "plane-inbound",
+                    p.direction === "outbound" ? "TASK DISPATCH" : "RESULT RETURN",
+                    p.color,
+                  ),
+                )
               }
             />
           ))}

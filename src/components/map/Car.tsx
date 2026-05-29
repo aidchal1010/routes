@@ -20,6 +20,7 @@ type Props = {
   laneOffset: number;
   direction: "outbound" | "inbound";
   onComplete: () => void;
+  onSelect?: () => void;
 };
 
 export default function Car({
@@ -30,6 +31,7 @@ export default function Car({
   laneOffset,
   direction,
   onComplete,
+  onSelect,
 }: Props) {
   const { paused } = usePause();
   const isInbound = direction === "inbound";
@@ -60,6 +62,8 @@ export default function Car({
     if (t > fadeOutStart) return (1 - t) / (1 - fadeOutStart);
     return 1;
   });
+  // Ignore clicks while the car is faint (the brief fade tails).
+  const pointerEvents = useTransform(opacity, (o) => (o < 0.4 ? "none" : "auto"));
 
   useEffect(() => {
     const controls = animate(progress, isInbound ? 0 : 1, {
@@ -79,7 +83,15 @@ export default function Car({
   }, [paused]);
 
   return (
-    <motion.g style={{ x, y, rotate, opacity }}>
+    <motion.g
+      style={{ x, y, rotate, opacity, pointerEvents, cursor: "pointer" }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect?.();
+      }}
+    >
+      {/* Enlarged invisible hit area — the car icon is a small, moving target. */}
+      <rect x={-28} y={-28} width={56} height={56} fill="transparent" />
       <CarIcon size={32} bodyColor={bodyColor} accentColor={accentColor} />
     </motion.g>
   );
