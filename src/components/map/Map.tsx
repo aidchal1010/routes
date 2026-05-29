@@ -93,7 +93,7 @@ export default function Map() {
   const lastCarSpawnAt = useRef<globalThis.Map<string, number>>(
     new globalThis.Map(),
   );
-  const { paused, pause, resume } = usePause();
+  const { paused } = usePause();
   const timersRef = useRef<PausableTimeouts | null>(null);
   if (!timersRef.current) timersRef.current = createPausableTimeouts();
   const timers = timersRef.current;
@@ -333,19 +333,6 @@ export default function Map() {
     };
   }, [timers]);
 
-  // TEMP — remove when click handlers land. Spacebar toggles global pause so the
-  // pause system can be verified before Step 3 wires real click-to-pause.
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code !== "Space") return;
-      e.preventDefault();
-      if (paused) resume();
-      else pause();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [paused, pause, resume]);
-
   // Plane spawner: every 1.5–3s, fire a burst of 1–3 staggered outbound planes to
   // distinct managers. Both the stagger and the next-burst reschedule are managed
   // timers, so a global pause freezes the spawner with no separate gate.
@@ -383,7 +370,8 @@ export default function Map() {
       maxScale={4}
       initialScale={0.9}
       centerOnInit
-      limitToBounds={false}
+      limitToBounds
+      autoAlignment={{ sizeX: 100, sizeY: 100 }}
       doubleClick={{ disabled: true }}
     >
       <TransformComponent
