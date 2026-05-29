@@ -59,24 +59,17 @@ export default function InfoPanel({ content, onClose }: Props) {
   return (
     <AnimatePresence>
       {content && (
-        <>
-          {/* Transparent click-outside catcher. No background → world stays fully
-              visible (no dimming). Mounted only while open, so it never blocks the
-              world (pan/zoom, future element clicks) when the panel is closed. */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={onClose}
-            aria-hidden="true"
-          />
-          <motion.aside
-            key="info-panel"
-            initial={{ x: 380, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 380, opacity: 0 }}
-            transition={{ duration: 0.25, ease: "easeInOut" }}
-            className="fixed right-0 top-0 z-50 flex h-screen w-[380px] flex-col border-l border-night-800 bg-night-950 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
+        // Close-on-outside-click is handled by the world (SVG root onClick in Map);
+        // building clicks stopPropagation to swap instead of close. The panel is fixed
+        // chrome, so the world stays fully visible and remains clickable behind it.
+        <motion.aside
+          key="info-panel"
+          initial={{ x: 380, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: 380, opacity: 0 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
+          className="fixed right-0 top-0 z-50 flex h-screen w-[380px] flex-col border-l border-night-800 bg-night-950 shadow-2xl"
+        >
             {/* Header: color swatch + element name + close button */}
             <div className="flex items-center gap-3 px-5 pt-5">
               <span
@@ -185,7 +178,6 @@ export default function InfoPanel({ content, onClose }: Props) {
               )}
             </div>
           </motion.aside>
-        </>
       )}
     </AnimatePresence>
   );

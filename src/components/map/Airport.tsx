@@ -1,12 +1,22 @@
 import { palette } from "@/lib/palette";
 import PlaneIcon from "./PlaneIcon";
 
-export default function Airport() {
+type Props = {
+  onSelect?: () => void;
+};
+
+export default function Airport({ onSelect }: Props) {
   const cx = 2200;
   const cy = 1400;
 
   return (
-    <g>
+    <g
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect?.();
+      }}
+      style={onSelect ? { cursor: "pointer" } : undefined}
+    >
       <rect
         x={cx - 195 + 20}
         y={cy - 105 + 20}

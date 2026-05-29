@@ -9,6 +9,7 @@ type Props = {
   colorIcon: string;
   iconShape: IconShape;
   label: string;
+  onSelect?: () => void;
 };
 
 export default function Manager({
@@ -19,9 +20,16 @@ export default function Manager({
   colorIcon,
   iconShape,
   label,
+  onSelect,
 }: Props) {
   return (
-    <g>
+    <g
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect?.();
+      }}
+      style={onSelect ? { cursor: "pointer" } : undefined}
+    >
       <rect
         x={cx - 90 + 14}
         y={cy - 90 + 14}

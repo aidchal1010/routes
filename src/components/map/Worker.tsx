@@ -3,6 +3,7 @@ type Props = {
   colorBase: string;
   colorMid: string;
   colorDeep: string;
+  onSelect?: () => void;
 };
 
 export default function Worker({
@@ -10,9 +11,16 @@ export default function Worker({
   colorBase,
   colorMid,
   colorDeep,
+  onSelect,
 }: Props) {
   return (
-    <g>
+    <g
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect?.();
+      }}
+      style={onSelect ? { cursor: "pointer" } : undefined}
+    >
       <rect
         x={cx - 40 + 8}
         y={cy - 40 + 8}

@@ -15,6 +15,8 @@ import {
   type PausableTimeouts,
 } from "@/lib/pausable-timeouts";
 import { usePause } from "./PauseContext";
+import { getPlaceholderContent } from "./element-content";
+import type { PanelContent } from "./InfoPanel";
 import GridBackground from "./GridBackground";
 import Airport from "./Airport";
 import Car from "./Car";
@@ -83,7 +85,12 @@ function tryAddPlane(prev: ActivePlane[], plane: ActivePlane): ActivePlane[] {
   return [...prev, plane];
 }
 
-export default function Map() {
+type MapProps = {
+  onElementClick: (content: PanelContent) => void;
+  onBackgroundClick: () => void;
+};
+
+export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
   const [activePlanes, setActivePlanes] = useState<ActivePlane[]>([]);
   const [activeCars, setActiveCars] = useState<ActiveCar[]>([]);
   const activeCarsRef = useRef<ActiveCar[]>([]);
@@ -383,6 +390,7 @@ export default function Map() {
           width="100%"
           height="100%"
           preserveAspectRatio="xMidYMid meet"
+          onClick={onBackgroundClick}
         >
           <GridBackground />
           {ROADS.map((r) => (
@@ -391,9 +399,27 @@ export default function Map() {
           {FLIGHT_PATHS.map((f) => (
             <FlightPath key={f.id} d={f.d} color={f.color} />
           ))}
-          <Airport />
+          <Airport
+            onSelect={() =>
+              onElementClick(
+                getPlaceholderContent(
+                  "orchestrator",
+                  "ORCHESTRATOR",
+                  palette.orchestrator,
+                ),
+              )
+            }
+          />
           {MANAGERS.map(({ id, ...config }) => (
-            <Manager key={id} {...config} />
+            <Manager
+              key={id}
+              {...config}
+              onSelect={() =>
+                onElementClick(
+                  getPlaceholderContent("manager", config.label, config.colorBase),
+                )
+              }
+            />
           ))}
           {WORKERS.map((worker) => {
             const manager = MANAGERS.find((m) => m.id === worker.managerId)!;
@@ -404,6 +430,11 @@ export default function Map() {
                 colorBase={manager.colorIcon}
                 colorMid={manager.colorBase}
                 colorDeep={manager.colorMid}
+                onSelect={() =>
+                  onElementClick(
+                    getPlaceholderContent("worker", "WORKER", manager.colorIcon),
+                  )
+                }
               />
             );
           })}
