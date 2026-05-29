@@ -243,3 +243,16 @@ Search opens the matching element's popup directly — reuses the existing popup
 Implementation: search maps a query string → an element content key → opens popup with that content. Trivial once the popup + content systems exist. Likely fuzzy-match or simple dropdown of matching element types as you type.
 
 This means search is genuinely easy to build once Layer 1a (popup) + Layer 2 (content) exist. Could even slot into Layer 1b as just the input box, with wiring deferred until content exists.
+
+## Phase G — Popup UI design (LOCKED)
+
+- Layout: SIDE PANEL, slides in from the right. World stays visible behind it (not dimmed/covered). ~360-400px wide.
+- Tabs: "Overview" | "Components (Advanced)" at top of panel. Defaults to Overview. Tab state RESETS to Overview each time the panel opens (next click starts fresh on Overview).
+- Close: three methods — X button (top-right of panel), click-outside (on the world), AND ESC key. Most forgiving.
+- Entrance: slide-in from right + fade. Exit: reverse.
+- Visual style: dark theme matching world (night950 bg, terminal text, monospace labels). Element's color used as accent (header icon swatch + active-tab underline).
+- Opening the panel triggers pause (via PauseContext). Closing resumes.
+- Header: small color-swatch icon of the clicked element + element name in monospace.
+- Overview tab sections: "What it is", "What it does", "Example"
+- Advanced tab sections: "Components", "Implementation", "Production considerations", "References" (optional links)
+- Future polish: highlight/ring the clicked element in the world while panel open (deferred to polish step)
