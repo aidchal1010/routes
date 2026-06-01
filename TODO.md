@@ -256,3 +256,42 @@ This means search is genuinely easy to build once Layer 1a (popup) + Layer 2 (co
 - Overview tab sections: "What it is", "What it does", "Example"
 - Advanced tab sections: "Components", "Implementation", "Production considerations", "References" (optional links)
 - Future polish: highlight/ring the clicked element in the world while panel open (deferred to polish step)
+
+## Phase G Layer 2 — Content structure (LOCKED)
+
+### Overview tab (per element) — teaches progressively, follows a path
+- What it is (analogy-driven, metaphor)
+- What it does (role in the flow, connected narrative)
+- Example (concrete, relatable)
+Template proven on Orchestrator. ~2.5x original length, flowing not bullet-y.
+
+### Advanced tab (per element) — genuinely technical, additive (NOT overview-with-jargon)
+- How it actually works (real mechanism, no metaphor)
+- Code (illustrative pseudo-code + "check current SDK" note; rich inline comments showing WHERE: the thinking/reasoning step, where memory lives, model choice, prompt locations)
+- Gotchas (named failure modes from Anthropic's docs)
+- When to use it (decision criteria)
+- Our model (one-line mapping: our term -> Anthropic's official term)
+- References (links, no inline citations)
+
+### Model-choice content (per element where relevant)
+Anthropic's pattern: Opus as lead/orchestrator, Sonnet as subagents/workers. The "strong model orchestrates, cheaper models execute" decision. Include in Orchestrator, Manager, Worker advanced tabs.
+
+### Code approach: illustrative pseudo-code, clearly labeled, with "check current Claude SDK for exact API" note. Honest, won't go stale.
+
+### SCOPE DECISION: popups are PER-ELEMENT ONLY
+- Each panel = what THIS element is + how to build THIS piece. Tight, focused.
+- Whole-system content does NOT go in per-element panels.
+
+### Dedicated "How to build this yourself" panel (SEPARATE — build later in Phase G)
+- Project file layout / scaffolding (orchestrator.py, subagent.py, prompts/, etc.)
+- How pieces connect
+- Which models go where (system-wide)
+- Tech stack recommendations
+- This is where file-layout content lives, NOT repeated per-element.
+
+### Citations: References section at bottom of Advanced only, with links. No inline.
+### Transparency: "Our model" note in every element's Advanced tab (our term vs Anthropic's).
+
+### Two grounding sources (everything traces to these):
+1. Building Effective Agents — anthropic.com/engineering/building-effective-agents (Dec 2024)
+2. How we built our multi-agent research system — anthropic.com/engineering/multi-agent-research-system (June 2025)
