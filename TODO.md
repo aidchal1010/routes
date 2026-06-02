@@ -315,3 +315,12 @@ Advanced is the on-ramp from understanding -> building, not gated expert content
 7. References
 
 ### Build Guide = separate TOP TAB (not a popup). Whole-system learning path + file layout.
+
+## Phase G Layer 2 — VOICE: generic, not Claude-centric (LOCKED)
+
+The site teaches the PATTERN, not a product. Explanations are model-neutral.
+- Code: model = "your strongest model" with "# e.g. Claude Opus, or another frontier model" as example — not hardcoded to Claude everywhere.
+- "Where to start": generic ("call a strong model with a planning prompt"), tool-agnostic.
+- Strong-lead / cheap-worker split = stated as general principle; Anthropic's Opus-lead/Sonnet-worker given as a cited EXAMPLE, not the universal rule.
+- Anthropic sources STILL cited in References (honest attribution — that's where the patterns are documented). But prose stays model-neutral.
+- Rationale: a learning tool that's secretly a product pitch loses trust. Teaching the real pattern generically = credible educational resource.
