@@ -382,3 +382,12 @@ Worker -> Tool relabel. Let Claude Code read the actual code + THIS TODO and rec
 
 ## IMPORTANT: Claude Code must READ TODO.md at the start of Layer 2 work.
 All Phase G Layer 2 content decisions are logged here. Any Layer 2 prompt must instruct Claude Code to read TODO.md first.
+
+## CONFIRMED: Manager domains LOCKED
+- Manager A -> RESEARCH
+- Manager B -> DATA-ANALYSIS
+- Manager C -> CODE
+- Manager D -> COMMUNICATION-ACTION
+(Map A/B/C/D to these in content. Verify A/B/C/D positions/colors in code during recon so domain assignment matches the actual managers.)
+
+## CONFIRMED: Sequencing = recon -> relabel decision -> content
