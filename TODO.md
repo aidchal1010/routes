@@ -324,3 +324,13 @@ The site teaches the PATTERN, not a product. Explanations are model-neutral.
 - Strong-lead / cheap-worker split = stated as general principle; Anthropic's Opus-lead/Sonnet-worker given as a cited EXAMPLE, not the universal rule.
 - Anthropic sources STILL cited in References (honest attribution — that's where the patterns are documented). But prose stays model-neutral.
 - Rationale: a learning tool that's secretly a product pitch loses trust. Teaching the real pattern generically = credible educational resource.
+
+## Phase G Layer 2 — "Building with AI assistance" mention (LOCKED)
+
+Acknowledge that people can use AI coding assistants to build these systems. Two placements:
+
+1. PER-ELEMENT (in "Where to start"): light, optional one-liner — "AI coding assistants (e.g. Claude Code or similar) can scaffold this for you, but build the simple version first so you understand what's generated." Tone: matter-of-fact, not pushy, generic/model-neutral.
+
+2. BUILD GUIDE tab: fuller "Building with AI assistance" section — AI helps with scaffolding/boilerplate, but you must understand the architecture (which the site teaches); build order still applies. Optional honest meta-note: this site itself was built with AI assistance (true — built with Claude Code), modeling the "AI helps build, understanding makes it good" message.
+
+Key framing throughout: "use AI to help, but understand it first." Protects educational integrity.
