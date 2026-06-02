@@ -416,7 +416,11 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
               {...config}
               onSelect={() =>
                 onElementClick(
-                  getPlaceholderContent("manager", config.label, config.colorBase),
+                  getPlaceholderContent(
+                    "manager",
+                    `MANAGER · ${config.domain}`,
+                    config.colorBase,
+                  ),
                 )
               }
             />
@@ -432,7 +436,7 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
                 colorDeep={manager.colorMid}
                 onSelect={() =>
                   onElementClick(
-                    getPlaceholderContent("worker", "WORKER", manager.colorIcon),
+                    getPlaceholderContent("tool", "TOOL", manager.colorIcon),
                   )
                 }
               />
@@ -445,11 +449,11 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
               y={l.position.cy}
               textAnchor="middle"
               fontFamily="monospace"
-              fontSize={28}
+              fontSize={36}
               letterSpacing={2}
               fill={palette.ink400}
             >
-              WORKERS
+              TOOLS
             </text>
           ))}
           {activeCars.map((c) => (
@@ -468,7 +472,7 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
                 onElementClick(
                   getPlaceholderContent(
                     c.direction === "outbound" ? "car-outbound" : "car-inbound",
-                    c.direction === "outbound" ? "SUBTASK" : "RESULT",
+                    c.direction === "outbound" ? "TOOL CALL" : "TOOL RESULT",
                     c.bodyColor,
                   ),
                 )

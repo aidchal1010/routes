@@ -8,7 +8,7 @@ type Props = {
   colorDeep: string;
   colorIcon: string;
   iconShape: IconShape;
-  label: string;
+  domain: string;
   onSelect?: () => void;
 };
 
@@ -19,7 +19,7 @@ export default function Manager({
   colorDeep,
   colorIcon,
   iconShape,
-  label,
+  domain,
   onSelect,
 }: Props) {
   return (
@@ -86,11 +86,22 @@ export default function Manager({
         y={cy + 150}
         textAnchor="middle"
         fontFamily="monospace"
-        fontSize={28}
+        fontSize={36}
         letterSpacing={2}
         fill={palette.ink400}
       >
-        {label}
+        MANAGER
+      </text>
+      <text
+        x={cx}
+        y={cy + 194}
+        textAnchor="middle"
+        fontFamily="monospace"
+        fontSize={36}
+        letterSpacing={2}
+        fill={palette.ink400}
+      >
+        {domain}
       </text>
     </g>
   );

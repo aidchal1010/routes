@@ -8,7 +8,7 @@ import type { PanelContent } from "./InfoPanel";
 type ElementKind =
   | "orchestrator"
   | "manager"
-  | "worker"
+  | "tool"
   | "plane-outbound"
   | "plane-inbound"
   | "car-outbound"
@@ -63,26 +63,26 @@ const BODY: Record<ElementKind, (name: string) => Body> = {
     overview: {
       whatItIs: `${name} is a domain-specific sub-orchestrator — a specialized agent that owns one slice of the problem, the way a team lead owns a project area.`,
       whatItDoes:
-        "It receives a task dispatched from the orchestrator, breaks it into smaller subtasks, sends those to its own workers, and synthesizes their results into a single answer it hands back up.",
+        "It receives a task dispatched from the orchestrator, works through it step by step, calls whichever of its tools it needs along the way, and synthesizes the results into a single answer it hands back up.",
       example:
-        "Asked to 'summarize last quarter's support tickets,' it might dispatch one worker to pull the tickets, one to cluster them by theme, and one to draft the summary — then stitch the three results together.",
+        "Asked to 'summarize last quarter's support tickets,' it might call a database tool to pull the tickets, an analysis tool to cluster them by theme, then draft the summary itself — combining the tool results into one answer.",
     },
     advanced: {
       components: [
         "Model — the LLM that runs the manager's reasoning (capable, since it plans and synthesizes)",
-        "System prompt — defines the manager's domain, its workers, and its decomposition strategy",
-        "Decomposition logic — turns an incoming task into a set of worker subtasks",
-        "Worker registry — the set of workers this manager may dispatch to",
-        "Result synthesis prompt — merges worker outputs into one coherent result",
+        "System prompt — defines the manager's domain, its tools, and how to use them",
+        "Tool-use logic — decides which tools to call, with what inputs, and in what order",
+        "Tool registry — the set of tools this manager may call",
+        "Result synthesis prompt — merges tool outputs into one coherent result",
       ],
       implementation:
-        "Build it as its own orchestrator-workers loop: the manager calls worker subagents, collects their structured results, and runs a synthesis pass. Managers never talk to peer managers — they only fan out to their own workers and report back to the orchestrator (the no-peer-coordination rule, kept deliberately to avoid tangled cross-team dependencies).",
+        "Build it as a tool-using agent loop: the manager calls its tools, collects their structured results, and runs a synthesis pass. Managers never talk to peer managers — they only call their own tools and report back to the orchestrator (the no-peer-coordination rule, kept deliberately to avoid tangled cross-team dependencies).",
       production: [
         "Cache the system prompt — it's stable across calls and large",
-        "Add retries with backoff on worker failures so one flaky worker doesn't sink the cycle",
-        "Set a synthesis timeout / safety cap so a stuck worker can't block the manager forever",
-        "Log dispatch → result per worker for observability",
-        "Common pitfall: over-decomposing trivial tasks — spawning workers adds latency and cost",
+        "Add retries with backoff on tool failures so one flaky tool doesn't sink the cycle",
+        "Set a synthesis timeout / safety cap so a stuck tool call can't block the manager forever",
+        "Log call → result per tool for observability",
+        "Common pitfall: over-calling tools on trivial tasks — every tool call adds latency and cost",
       ],
       references: [
         {
@@ -92,30 +92,30 @@ const BODY: Record<ElementKind, (name: string) => Body> = {
       ],
     },
   }),
-  worker: () => ({
+  tool: () => ({
     overview: {
       whatItIs:
-        "A worker is a leaf agent — it does one atomic unit of work and reports the result back to its manager. It doesn't plan or delegate.",
+        "A tool is a capability a manager can call — a web search, a database query, a code-execution sandbox, an external API. It isn't an agent that plans or delegates; it's a function the manager invokes and gets a result back from.",
       whatItDoes:
-        "It receives a focused subtask, runs the tools it needs (a search, a query, a calculation, a draft), and returns a structured result.",
+        "When a manager needs information or an action it can't produce from reasoning alone, it calls a tool with a focused input and waits for the structured result it returns.",
       example:
-        "A worker might be handed 'fetch the 50 most recent support tickets,' call the database tool, and return the rows — nothing more.",
+        "A research manager hands its web-search tool the query 'recent EU AI regulation,' and the tool returns a list of source links — nothing more.",
     },
     advanced: {
       components: [
-        "Model — often a smaller/faster LLM, since the task is narrow",
-        "System prompt — scopes the worker to its single responsibility",
-        "Tools — the specific capabilities it needs (search, DB query, code execution, etc.)",
-        "Output contract — the structured shape it returns to its manager",
+        "Interface — a name plus an input schema the model can read and fill in",
+        "Capability — the underlying thing it does (an API call, a DB query, code execution)",
+        "Output contract — the structured result it hands back to the caller",
+        "Error handling — how failures and timeouts are surfaced to the manager",
       ],
       implementation:
-        "Build it as a focused tool-using agent: tight system prompt, only the tools it needs, and a clear output schema. Keep it stateless where possible so it's cheap to retry and parallelize.",
+        "Build it as a well-described function the agent runtime can call: a clear name, a typed input schema, and a structured return value. The model decides when to call it and with what arguments; the runtime executes it and feeds the result back into the manager's context.",
       production: [
-        "Prefer a smaller model — workers are the high-volume tier, so cost and latency add up",
-        "Validate the output against its schema before returning it upward",
-        "Make it idempotent/retry-safe so the manager can re-dispatch on failure",
-        "Constrain tool access to only what the task needs",
-        "Common pitfall: giving a worker too broad a remit — that's a manager's job, not a worker's",
+        "Validate tool inputs — the model can pass malformed or unsafe arguments",
+        "Handle failures and timeouts gracefully so one slow tool doesn't block the manager",
+        "Keep results concise — every tool result is read back into the manager's context window",
+        "Scope permissions narrowly — give a tool only the access its job requires",
+        "Common pitfall: exposing too many tools to one agent — it dilutes tool-choice accuracy",
       ],
       references: [
         {
@@ -130,7 +130,7 @@ const BODY: Record<ElementKind, (name: string) => Body> = {
       whatItIs:
         "This plane is a task dispatch — the orchestrator handing one domain-sized task to a manager. The plane's color matches the manager it's headed to.",
       whatItDoes:
-        "It carries the orchestrator's instruction down to a manager, who will then break it apart for its own workers.",
+        "It carries the orchestrator's instruction down to a manager, who will then work through it using its own tools.",
       example:
         "The orchestrator sends a 'analyze Q3 financials' task to the finance manager — that flight is this plane.",
     },
@@ -188,24 +188,24 @@ const BODY: Record<ElementKind, (name: string) => Body> = {
   "car-outbound": () => ({
     overview: {
       whatItIs:
-        "This car is a subtask — a manager handing one atomic piece of work to a worker. Its color matches the manager that dispatched it.",
+        "This car is a tool call — a manager invoking one of its tools with a focused input. Its color matches the manager that made the call.",
       whatItDoes:
-        "It carries a focused instruction from a manager to one of its workers, who will execute it and return a result.",
+        "It carries a focused input from a manager to one of its tools, which will run and return a result.",
       example:
-        "The finance manager asks a worker to 'pull the revenue table for Q3' — that trip is this car.",
+        "The data-analysis manager calls its database tool with 'pull the revenue table for Q3' — that trip is this car.",
     },
     advanced: {
       components: [
-        "Subtask — the single, focused unit of work for one worker",
-        "Tool hint — which capability the worker should use, if relevant",
+        "Input — the focused argument passed to the tool",
+        "Target tool — which capability is being called",
         "Contract — the result shape the manager expects back",
       ],
       implementation:
-        "In code this is a manager calling a worker subagent/tool with a narrow task. It's one edge of the manager's fan-out; the manager awaits all worker results before synthesizing.",
+        "In code this is a manager invoking a tool with a narrow input. It's one edge of the manager's fan-out; the manager awaits all tool results before synthesizing.",
       production: [
-        "Keep subtasks atomic so workers stay simple and parallelizable",
-        "Throttle concurrent dispatches per worker to avoid overload (mirrored here as the road's car cap)",
-        "Tag each subtask so its returning result can be matched back",
+        "Keep tool calls focused so tools stay simple and parallelizable",
+        "Throttle concurrent calls per tool to avoid overload (mirrored here as the road's car cap)",
+        "Tag each call so its returning result can be matched back",
       ],
       references: [
         {
@@ -218,23 +218,23 @@ const BODY: Record<ElementKind, (name: string) => Body> = {
   "car-inbound": () => ({
     overview: {
       whatItIs:
-        "This car is a result — a worker returning its finished piece of work to its manager. It's tinted the worker's lighter shade.",
+        "This car is a tool result — a tool returning its output to the manager that called it. It's tinted the tool's lighter shade.",
       whatItDoes:
-        "It carries a worker's output back to the manager, who will combine it with the other workers' results.",
+        "It carries a tool's output back to the manager, who will combine it with the other tool results.",
       example:
-        "The worker returns the Q3 revenue table to the finance manager — that return trip is this car.",
+        "The database tool returns the Q3 revenue table to the data-analysis manager — that return trip is this car.",
     },
     advanced: {
       components: [
-        "Result — the worker's atomic output",
-        "Correlation id — ties this result back to the subtask that triggered it",
+        "Result — the tool's output",
+        "Correlation id — ties this result back to the tool call that triggered it",
         "Status — success / error, so the manager can retry if needed",
       ],
       implementation:
-        "In code this is a worker subagent returning its result to its manager. Once all of a manager's outstanding workers report back, the manager runs its synthesis pass and returns upward.",
+        "In code this is a tool returning its result to the manager that called it. Once all of a manager's outstanding tool calls report back, the manager runs its synthesis pass and returns upward.",
       production: [
         "Return structured, schema-validated results so manager synthesis is reliable",
-        "Make workers retry-safe so a manager can re-dispatch a failed subtask",
+        "Make tools retry-safe so a manager can re-issue a failed call",
         "Surface errors explicitly rather than returning empty results",
       ],
       references: [

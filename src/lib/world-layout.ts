@@ -12,7 +12,7 @@ export type ManagerConfig = {
   colorDeep: string;
   colorIcon: string;
   iconShape: IconShape;
-  label: string;
+  domain: string;
 };
 
 export const MANAGERS: readonly ManagerConfig[] = [
@@ -24,7 +24,7 @@ export const MANAGERS: readonly ManagerConfig[] = [
     colorDeep: palette.managerADeep,
     colorIcon: palette.managerALight,
     iconShape: "circle",
-    label: "MANAGER A",
+    domain: "RESEARCH",
   },
   {
     id: "manager-b",
@@ -34,7 +34,7 @@ export const MANAGERS: readonly ManagerConfig[] = [
     colorDeep: palette.managerBDeep,
     colorIcon: palette.managerBLight,
     iconShape: "triangle",
-    label: "MANAGER B",
+    domain: "DATA-ANALYSIS",
   },
   {
     id: "manager-c",
@@ -44,7 +44,7 @@ export const MANAGERS: readonly ManagerConfig[] = [
     colorDeep: palette.managerCDeep,
     colorIcon: palette.managerCLight,
     iconShape: "square",
-    label: "MANAGER C",
+    domain: "CODE",
   },
   {
     id: "manager-d",
@@ -54,7 +54,7 @@ export const MANAGERS: readonly ManagerConfig[] = [
     colorDeep: palette.managerDDeep,
     colorIcon: palette.managerDLight,
     iconShape: "diamond",
-    label: "MANAGER D",
+    domain: "COMM-ACTION",
   },
 ] as const;
 
@@ -75,16 +75,18 @@ export const WORKERS: readonly WorkerConfig[] = [
   { id: "worker-a3", position: { cx: 2655, cy: 77 }, managerId: "manager-a" },
   { id: "worker-b1", position: { cx: 4370, cy: 1179 }, managerId: "manager-b" },
   { id: "worker-b2", position: { cx: 4370, cy: 1621 }, managerId: "manager-b" },
+  { id: "worker-b3", position: { cx: 4370, cy: 1400 }, managerId: "manager-b" },
   { id: "worker-c1", position: { cx: 1550, cy: 2801 }, managerId: "manager-c" },
   { id: "worker-c2", position: { cx: 1875, cy: 2684 }, managerId: "manager-c" },
   { id: "worker-c3", position: { cx: 2525, cy: 2684 }, managerId: "manager-c" },
   { id: "worker-c4", position: { cx: 2850, cy: 2801 }, managerId: "manager-c" },
   { id: "worker-d1", position: { cx: 30, cy: 1179 }, managerId: "manager-d" },
   { id: "worker-d2", position: { cx: 30, cy: 1621 }, managerId: "manager-d" },
+  { id: "worker-d3", position: { cx: 30, cy: 1400 }, managerId: "manager-d" },
 ] as const;
 
 export const WORKER_LABELS: readonly WorkerLabelConfig[] = [
-  { managerId: "manager-a", position: { cx: 2200, cy: 178 } },
+  { managerId: "manager-a", position: { cx: 2200, cy: -150 } },
   { managerId: "manager-b", position: { cx: 4310, cy: 1055 } },
   { managerId: "manager-c", position: { cx: 2200, cy: 2841 } },
   { managerId: "manager-d", position: { cx: 90, cy: 1055 } },
@@ -175,6 +177,8 @@ export const ROADS: readonly RoadConfig[] = [
     d: "M 3850 1400 C 4110 1400, 4305 1270, 4370 1179" },
   { id: "road-b-b2", managerId: "manager-b", workerId: "worker-b2",
     d: "M 3850 1400 C 4110 1400, 4305 1530, 4370 1621" },
+  { id: "road-b-b3", managerId: "manager-b", workerId: "worker-b3",
+    d: "M 3850 1400 C 4110 1400, 4240 1400, 4370 1400" },
   { id: "road-c-c1", managerId: "manager-c", workerId: "worker-c1",
     d: "M 2200 2450 C 1875 2580, 1615 2710, 1550 2801" },
   { id: "road-c-c2", managerId: "manager-c", workerId: "worker-c2",
@@ -187,4 +191,6 @@ export const ROADS: readonly RoadConfig[] = [
     d: "M 550 1400 C 290 1400, 95 1270, 30 1179" },
   { id: "road-d-d2", managerId: "manager-d", workerId: "worker-d2",
     d: "M 550 1400 C 290 1400, 95 1530, 30 1621" },
+  { id: "road-d-d3", managerId: "manager-d", workerId: "worker-d3",
+    d: "M 550 1400 C 290 1400, 160 1400, 30 1400" },
 ] as const;

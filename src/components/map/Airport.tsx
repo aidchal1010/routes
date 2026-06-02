@@ -84,7 +84,7 @@ export default function Airport({ onSelect }: Props) {
         y={cy + 195}
         textAnchor="middle"
         fontFamily="monospace"
-        fontSize={28}
+        fontSize={36}
         letterSpacing={2}
         fill={palette.ink400}
       >
