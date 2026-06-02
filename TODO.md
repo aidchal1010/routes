@@ -391,3 +391,25 @@ All Phase G Layer 2 content decisions are logged here. Any Layer 2 prompt must i
 (Map A/B/C/D to these in content. Verify A/B/C/D positions/colors in code during recon so domain assignment matches the actual managers.)
 
 ## CONFIRMED: Sequencing = recon -> relabel decision -> content
+
+## Overview tab — TWO additions (LOCKED)
+
+1. "IN THIS WORLD" ANCHOR: every Overview's "What it is" OPENS by naming the visual element ("In this world, the orchestrator is the airport at the center..."). Ties the explanation to the thing the user clicked.
+
+2. "WHAT IT CONNECTS TO" CONNECTOR: every Overview's "What it does" ENDS by pointing the user to the related on-screen motion/elements ("Watch the planes leaving the runway — each is a task heading to a manager..."). Makes panels a guided tour, not a glossary.
+
+Final Overview structure per element:
+- What it is: [in-this-world anchor] + concept
+- What it does: role + [what-it-connects-to connector]
+- Example: concrete instance
+
+Visual anchors per element:
+- Orchestrator = the airport (center)
+- Manager = the 4 colored buildings (N/S/E/W), by domain
+- Tool = the small lighter squares clustered around each manager
+- Outbound plane = colored plane leaving the right runway
+- Inbound plane = purple plane arriving at left runway
+- Outbound car = car leaving a manager toward a tool
+- Inbound car = lighter car returning from tool to manager
+- Road = thick line between manager and its tools
+- Flight path = dashed curved line between airport and a manager
