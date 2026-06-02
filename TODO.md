@@ -362,3 +362,23 @@ DOES NOT CHANGE: motion system, positions, colors, shapes, counts (3/2/4/2 = "th
 
 ## WELCOME POPUP (upgraded)
 Upgrade the small Layer-1b intro popup to a proper screen-covering WELCOME screen shown on entering /framework before motion: "Welcome to Routes..." + what the project is + how to use it (click anything, etc.). Decide later: full modal vs large card over dimmed/static world.
+
+## TOOLS — per-manager themed (LOCKED)
+
+Each of the 4 managers = a specialized DOMAIN; its tools reflect that domain. Makes the orchestrator-workers "specialization" principle visible — you can read a cluster's purpose from its tools.
+
+Illustrative domain set (refine before writing content):
+- Manager A -> RESEARCH: web search, document retrieval, source reader
+- Manager B -> DATA/ANALYSIS: database query, code execution, chart generator
+- Manager C -> CODE: file read/write, test runner, repo search
+- Manager D -> COMMUNICATION/ACTION: email/API, calendar, CRM
+
+Tool COUNT per manager stays 3/2/4/2 (now means "this subagent has N tools"). If a domain needs a specific count of named tools, may revisit counts — flag if mismatch.
+
+Per-manager themed tools means: each manager's panel content is domain-specific; each tool's content names what that tool does. Opens future polish: distinct tool icons per type.
+
+## CODE RELABEL — let Claude Code recommend depth
+Worker -> Tool relabel. Let Claude Code read the actual code + THIS TODO and recommend: full rename (Worker.tsx->Tool.tsx + internal names) vs keep-data-names-change-display-text. Decide from its recon.
+
+## IMPORTANT: Claude Code must READ TODO.md at the start of Layer 2 work.
+All Phase G Layer 2 content decisions are logged here. Any Layer 2 prompt must instruct Claude Code to read TODO.md first.
