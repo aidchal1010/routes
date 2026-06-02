@@ -416,3 +416,9 @@ Visual anchors per element:
 
 ## Connector wording — NO viewport-relative directions (LOCKED)
 "What it connects to" connectors must NOT use "to your right / left / above" etc. — the user can pan/zoom, so those break. Reference elements by name/identity instead ("the planes leaving the airport's runway", "the purple planes arriving at the airport", "the cars heading out from this manager"). Always accurate regardless of view.
+
+## Manager content = shared core + domain block (LOCKED)
+All 4 managers share the core "what a subagent is" explanation; each adds a domain block (Research/Data-Analysis/Code/Communication-Action).
+Storage: one manager template (shared text) + per-domain data (domain name, its tools, its example, optional 1 domain-specific line). Keeps concept consistent, less repetition, easy to maintain.
+Shared across all 4: how-it-works, where-to-start, when-to-use, our-model, references, core gotchas.
+Per-domain: which tools, the example, domain name in "what it is", domain-flavored tool names in code.
