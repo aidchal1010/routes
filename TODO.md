@@ -334,3 +334,31 @@ Acknowledge that people can use AI coding assistants to build these systems. Two
 2. BUILD GUIDE tab: fuller "Building with AI assistance" section — AI helps with scaffolding/boilerplate, but you must understand the architecture (which the site teaches); build order still applies. Optional honest meta-note: this site itself was built with AI assistance (true — built with Claude Code), modeling the "AI helps build, understanding makes it good" message.
 
 Key framing throughout: "use AI to help, but understand it first." Protects educational integrity.
+
+## METAPHOR CORRECTION (LOCKED) — Workers → Tools
+
+Foundation fix after checking against sources. The accurate model:
+  Orchestrator (lead agent) -> Managers (subagents, own context windows) -> Tools (search, DB, code-exec, APIs)
+
+- Worker RELABELED to TOOL. A "tool" = a capability a subagent calls (search, database, code execution, external API). This matches Anthropic's "subagents use 3+ tools in parallel" far better than a 3rd agent tier.
+- Manager = subagent (Anthropic's term); we keep "Manager" label for friendliness but it now clearly = the subagent tier.
+- Car (manager<->tool) now = a subagent making a tool call + getting a result. Motion UNCHANGED: car out = the call, pause = tool executing, car back = the result.
+- Plane (orchestrator<->manager) unchanged = task dispatch / condensed result return.
+
+### Scope of change:
+CONTENT/LABELS (main work):
+- Visual label "WORKERS" -> "TOOLS"
+- Worker content -> rewritten as Tool content
+- Car content: "subtask/result" -> "tool call / tool result"
+- Legend, welcome popup, Build Guide language
+CODE (light):
+- Decide: rename Worker.tsx -> Tool.tsx, OR keep internal data names (worker/WORKERS) and only change user-facing text. LEANING: keep data-layer names to avoid risky refactor, change only displayed text + content. DECIDE before implementing.
+- element-content.ts worker entry -> tool entry
+DOES NOT CHANGE: motion system, positions, colors, shapes, counts (3/2/4/2 = "this subagent has N tools"), pause/click/panel.
+
+### Side effects:
+- "Our model" caveat gets SMALLER — model is now accurately the multi-agent research system (lead->subagents->tools) composed. Managers still a friendly relabel of "subagents."
+- FUTURE POLISH (noted, not now): tools could get distinct icons by type (search=magnifier, db=cylinder, code=brackets). Relabel opens this door.
+
+## WELCOME POPUP (upgraded)
+Upgrade the small Layer-1b intro popup to a proper screen-covering WELCOME screen shown on entering /framework before motion: "Welcome to Routes..." + what the project is + how to use it (click anything, etc.). Decide later: full modal vs large card over dimmed/static world.
