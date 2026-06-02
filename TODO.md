@@ -295,3 +295,23 @@ Anthropic's pattern: Opus as lead/orchestrator, Sonnet as subagents/workers. The
 ### Two grounding sources (everything traces to these):
 1. Building Effective Agents — anthropic.com/engineering/building-effective-agents (Dec 2024)
 2. How we built our multi-agent research system — anthropic.com/engineering/multi-agent-research-system (June 2025)
+
+## Phase G Layer 2 — TARGET CLARIFIED (the vision)
+
+The site is a learning funnel from "what is this" to "I built one":
+- OVERVIEW tab = understanding (anyone, incl. non-technical). Conceptual, metaphor-driven.
+- ADVANCED tab = for BUILDERS (incl. newcomers ready to build, NOT just experts). How it works + illustrative code + WHERE TO START building this piece.
+- BUILD GUIDE tab (separate top-level tab, alongside world view) = build the WHOLE system: file layout, order of assembly, learning path, which models where.
+
+Advanced is the on-ramp from understanding -> building, not gated expert content.
+
+### Final per-element Advanced structure:
+1. How it actually works
+2. Code (illustrative pseudo-code, teaching comments)
+3. Where to start (NEW — first concrete step to build THIS piece)
+4. Gotchas
+5. When to use it
+6. Our model (mapping note)
+7. References
+
+### Build Guide = separate TOP TAB (not a popup). Whole-system learning path + file layout.
