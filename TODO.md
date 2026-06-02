@@ -422,3 +422,14 @@ All 4 managers share the core "what a subagent is" explanation; each adds a doma
 Storage: one manager template (shared text) + per-domain data (domain name, its tools, its example, optional 1 domain-specific line). Keeps concept consistent, less repetition, easy to maintain.
 Shared across all 4: how-it-works, where-to-start, when-to-use, our-model, references, core gotchas.
 Per-domain: which tools, the example, domain name in "what it is", domain-flavored tool names in code.
+
+## TOOL COUNTS CHANGED: 3/2/4/2 -> 3/3/4/3 (LOCKED)
+Counts now follow domain content, not arbitrary slots. Adding 2 tool buildings (B +1, D +1) = 13 tools total.
+Final tool sets per manager:
+- A RESEARCH (3): web search, document retrieval, source reader
+- B DATA-ANALYSIS (3): database query, code execution, chart generator
+- C CODE (4): file read/write, test runner, repository search, linter/type-checker
+- D COMM-ACTION (3): email/messaging, calendar, CRM/records
+Subtle truth this adds: managers don't all have the same tool count, because real subagents don't.
+
+REQUIRES layout work BEFORE content: new positions + roads (beziers) for the 2 added tools in B (east) and D (west) clusters; re-verify clusters/car-lanes. Relabel (Worker->Tool display-only, Option A) happens in same pass or just before. THEN write content.
