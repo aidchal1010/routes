@@ -413,3 +413,6 @@ Visual anchors per element:
 - Inbound car = lighter car returning from tool to manager
 - Road = thick line between manager and its tools
 - Flight path = dashed curved line between airport and a manager
+
+## Connector wording — NO viewport-relative directions (LOCKED)
+"What it connects to" connectors must NOT use "to your right / left / above" etc. — the user can pan/zoom, so those break. Reference elements by name/identity instead ("the planes leaving the airport's runway", "the purple planes arriving at the airport", "the cars heading out from this manager"). Always accurate regardless of view.
