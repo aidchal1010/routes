@@ -433,3 +433,29 @@ Final tool sets per manager:
 Subtle truth this adds: managers don't all have the same tool count, because real subagents don't.
 
 REQUIRES layout work BEFORE content: new positions + roads (beziers) for the 2 added tools in B (east) and D (west) clusters; re-verify clusters/car-lanes. Relabel (Worker->Tool display-only, Option A) happens in same pass or just before. THEN write content.
+
+## ORCHESTRATOR CONTENT — FINALIZED (ready to wire, review before adding tomorrow)
+
+### Overview
+**What it is:** In this world, the orchestrator is the airport at the center — every plane begins or ends its journey here. It represents the lead agent: a single, capable AI model that receives your original request. But here's the key idea: it doesn't try to answer the request by itself. Its whole job is to understand the request deeply enough to break it into smaller, independent pieces of work that specialized managers can handle. It's a coordinator, not a doer.
+
+**What it does:** When a request arrives, the orchestrator first thinks — it analyzes what you're really asking and forms a plan. Then it divides that plan into separate tasks and hands each to the manager best suited for it. While the managers work, it waits; as their results return, it holds them together, and once it has everything, it performs the final step: synthesis — combining the separate results into one coherent answer greater than any single piece. [CONNECTOR, italic] Watch the planes leaving the airport — each one carries a task to one of the four specialized managers around it (Research, Data-Analysis, Code, and Communication). The purple planes arriving back are those managers reporting their results.
+
+**Example:** Imagine you ask, "Research the electric vehicle market and chart the top three players' revenue." A single AI answering alone would have to do everything in one stream of thought. The orchestrator instead splits the work: it sends the market research to the Research manager and the revenue analysis to the Data-Analysis manager — at the same time. When each reports back, it combines their findings into one answer. You get a broader, deeper result than one agent working alone could produce.
+
+### Advanced
+**How it actually works:** The orchestrator is a single AI model call running with a planning-oriented prompt. When a query arrives, it doesn't answer — it emits a plan: a set of subtask definitions. Your code reads that plan and, for each subtask, makes a separate AI call (a manager, or "subagent"), each with its own independent context window. These calls run in parallel. As each returns a condensed result, the orchestrator collects them; once all are in, it makes a final call whose job is synthesis. Crucially, the orchestrator's own context holds only the plan and the returned summaries — not the full work each manager did. That separation is what lets the system process more total information than any single context window could hold.
+
+**Code:** [illustrative pseudo-code, 4 steps: PLAN (strongest model, planning prompt, think-before-deciding comment) -> REMEMBER (save plan to memory, context-window note) -> DISPATCH IN PARALLEL (run_manager per task, own context window) -> SYNTHESIZE (strong model, synthesis prompt). "check your AI provider's current SDK" header. Full code block in conversation history.]
+
+**Where to start:** Don't build the parallel version first. Start with the simplest possible loop: one AI call that breaks a request into 2-3 subtasks, then a separate call for each, then a final call that combines the answers — all sequential. Get that working end-to-end, then switch the per-subtask calls to parallel. The parallelism is an optimization; the decompose->delegate->synthesize loop is the real thing to nail first. (AI coding assistants can scaffold this — but build the simple version yourself first so you understand what's generated.)
+
+**Gotchas:** Over-spawning (early Anthropic versions spawned 50 subagents for a 1-subagent question; planning prompt must scale effort to complexity). Vague delegation (loose subtask descriptions -> managers duplicate/drift; each needs objective + output format + boundaries). Losing the plan (long runs fill context window; persist plan to memory early). Cost (many times the tokens of a single call; only worth it when answer quality justifies it).
+
+**When to use it:** Breadth-first tasks that split into independent parallel directions where total info exceeds one context window (research, multi-file code changes, multi-source gathering). Avoid for tightly interdependent tasks (subtask needs previous result) and simple queries one call handles — coordination overhead isn't worth it.
+
+**Our model:** "Orchestrator" maps to Anthropic's lead agent (multi-agent research system) and the central LLM in the orchestrator-workers workflow (Building Effective Agents). Patterns are general, apply to any capable model.
+
+**References:** Building Effective Agents — Anthropic (2024); How we built our multi-agent research system — Anthropic (2025).
+
+### STATUS: text locked, NOT yet wired. Tomorrow: review, then wire into element-content.ts as the end-to-end test (first content rendered in real panel). Then batch the other 8.
