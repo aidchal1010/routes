@@ -459,3 +459,19 @@ REQUIRES layout work BEFORE content: new positions + roads (beziers) for the 2 a
 **References:** Building Effective Agents — Anthropic (2024); How we built our multi-agent research system — Anthropic (2025).
 
 ### STATUS: text locked, NOT yet wired. Tomorrow: review, then wire into element-content.ts as the end-to-end test (first content rendered in real panel). Then batch the other 8.
+
+## TARGET AUDIENCE (LOCKED — governs all Layer 2 content)
+
+A learning funnel: curious -> understanding -> able to build. Three groups:
+
+1. CURIOUS NON-TECHNICAL (PM, designer, founder, student) — wants to UNDERSTAND, not code today. Served entirely by OVERVIEW tab (metaphor-driven, zero jargon, 30-sec read). May never open Advanced; that's fine.
+
+2. ASPIRING BUILDER / NEWCOMER-TO-AGENTS (PRIMARY audience for Advanced) — technical enough, new to agents, thinks "how do I build this?" Served by ADVANCED as an ON-RAMP: how-it-works -> illustrative code -> where-to-start. A foothold, not gated expert content.
+
+3. PROFICIENT ENGINEER (SECONDARY for Advanced) — skims Overview (known), gets value from Advanced's gotchas + when-to-use. Not who we optimize for.
+
+PRIORITY RULE: Advanced is primarily for Group 2 (aspiring builders), secondarily Group 3. When choosing "deeper for expert" vs "clearer for newcomer-builder," choose CLEARER. Expert still benefits; not optimized for.
+
+NOT for: agent-framework experts wanting production copy-paste code (code is illustrative). Not Claude-specific (model-neutral voice).
+
+This audience def validated the Orchestrator content as written (illustrative code + "start simple" hand-holding = correctly pitched at Group 2).
