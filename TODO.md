@@ -475,3 +475,13 @@ PRIORITY RULE: Advanced is primarily for Group 2 (aspiring builders), secondaril
 NOT for: agent-framework experts wanting production copy-paste code (code is illustrative). Not Claude-specific (model-neutral voice).
 
 This audience def validated the Orchestrator content as written (illustrative code + "start simple" hand-holding = correctly pitched at Group 2).
+
+## VOICE RULES (LOCKED — apply to ALL Layer 2 content)
+Make it sound human-written, not AI. Rules:
+1. NO em-dashes / no "word — aside — word" dash habit. Restructure instead. (Keep legitimate compound-term hyphens like "breadth-first" unless told otherwise.)
+2. NO sentences starting with "But."
+3. NO ask-then-deny structure ("it doesn't X, it does Y" / "when a query arrives, it doesn't answer, it emits..."). State directly and positively.
+4. Do NOT use "spawned" / "spawn." Use create/start/run.
+5. NO "Gotchas." Use "Common pitfalls" (academic). [picked: Common pitfalls]
+6. NO "doer" / "coordinator not a doer" framing.
+General: sound like the author wrote it, plain confident prose, no AI tells.
