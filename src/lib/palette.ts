@@ -31,6 +31,17 @@ export const palette = {
   worker: "#4DA9CE",
   tool: "#9DC141",
   signal: "#BD3052",
+  // Code-block syntax highlighting (VS Code Dark+ based, blue function calls).
+  // Applied via inline style in highlightCode.tsx — not mirrored in tailwind.config
+  // because these are never used as Tailwind utility classes.
+  syntax: {
+    comment: "#6A9955",
+    string: "#CE9178",
+    keyword: "#C586C0",
+    func: "#61AFEF",
+    number: "#B5CEA8",
+    default: "#D4D4D4",
+  },
 } as const;
 
 export type PaletteKey = keyof typeof palette;

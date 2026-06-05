@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { highlightCode } from "./highlightCode";
 
 // Content shape for a single element's popup. Mirrors the locked two-tier structure
 // (TODO.md "Popup content structure"). Exported so the shell and the future content
@@ -12,13 +13,17 @@ export type PanelContent = {
   overview: {
     whatItIs: string;
     whatItDoes: string;
+    connector: string; // italic line rendered after whatItDoes, inside "What it does"
     example: string;
   };
   advanced: {
-    components: string[];
-    implementation: string;
-    production: string[];
-    references?: { label: string; url: string }[];
+    howItWorks: string;
+    code: string; // monospace preformatted block (horizontal scroll if long)
+    whereToStart: string;
+    commonTraps: string; // flowing prose; paragraphs split on blank lines
+    whenToUse: string;
+    ourModel: string;
+    references: { label: string; url: string }[];
   };
 };
 
@@ -64,11 +69,11 @@ export default function InfoPanel({ content, onClose }: Props) {
         // chrome, so the world stays fully visible and remains clickable behind it.
         <motion.aside
           key="info-panel"
-          initial={{ x: 380, opacity: 0 }}
+          initial={{ x: 480, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          exit={{ x: 380, opacity: 0 }}
+          exit={{ x: 480, opacity: 0 }}
           transition={{ duration: 0.25, ease: "easeInOut" }}
-          className="fixed right-0 top-0 z-50 flex h-screen w-[380px] flex-col border-l border-night-800 bg-night-950 shadow-2xl"
+          className="fixed right-0 top-0 z-50 flex h-screen w-[480px] flex-col border-l border-night-800 bg-night-950 shadow-2xl"
         >
             {/* Header: color swatch + element name + close button */}
             <div className="flex items-center gap-3 px-5 pt-5">
@@ -94,7 +99,7 @@ export default function InfoPanel({ content, onClose }: Props) {
               {(
                 [
                   ["overview", "Overview"],
-                  ["advanced", "Components (Advanced)"],
+                  ["advanced", "Advanced"],
                 ] as const
               ).map(([key, label]) => {
                 const active = tab === key;
@@ -125,6 +130,9 @@ export default function InfoPanel({ content, onClose }: Props) {
                   <section>
                     <SectionLabel>What it does</SectionLabel>
                     <p>{content.overview.whatItDoes}</p>
+                    <p className="mt-2 italic text-ink-400">
+                      {content.overview.connector}
+                    </p>
                   </section>
                   <section>
                     <SectionLabel>Example</SectionLabel>
@@ -134,46 +142,59 @@ export default function InfoPanel({ content, onClose }: Props) {
               ) : (
                 <>
                   <section>
-                    <SectionLabel>Components</SectionLabel>
-                    <ul className="list-disc space-y-1 pl-4">
-                      {content.advanced.components.map((item, i) => (
-                        <li key={i}>{item}</li>
-                      ))}
-                    </ul>
+                    <SectionLabel>How it actually works</SectionLabel>
+                    <p>{content.advanced.howItWorks}</p>
                   </section>
                   <section>
-                    <SectionLabel>Implementation</SectionLabel>
-                    <p>{content.advanced.implementation}</p>
+                    <SectionLabel>Code</SectionLabel>
+                    <pre className="overflow-x-auto rounded-md border border-night-800 bg-night-900 p-3 font-mono text-[11px] leading-relaxed text-ink-100">
+                      <code>{highlightCode(content.advanced.code)}</code>
+                    </pre>
                   </section>
                   <section>
-                    <SectionLabel>Production considerations</SectionLabel>
-                    <ul className="list-disc space-y-1 pl-4">
-                      {content.advanced.production.map((item, i) => (
-                        <li key={i}>{item}</li>
-                      ))}
-                    </ul>
+                    <SectionLabel>Where to start</SectionLabel>
+                    <p>{content.advanced.whereToStart}</p>
                   </section>
-                  {content.advanced.references &&
-                    content.advanced.references.length > 0 && (
-                      <section>
-                        <SectionLabel>References</SectionLabel>
-                        <ul className="space-y-1">
-                          {content.advanced.references.map((ref, i) => (
-                            <li key={i}>
-                              <a
-                                href={ref.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline"
-                                style={{ color: content.accentColor }}
-                              >
-                                {ref.label}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      </section>
-                    )}
+                  <section>
+                    <SectionLabel>Common traps to watch for</SectionLabel>
+                    {content.advanced.commonTraps
+                      .split(/\n\s*\n/)
+                      .map((para) => para.trim())
+                      .filter(Boolean)
+                      .map((para, i) => (
+                        <p key={i} className={i > 0 ? "mt-2" : undefined}>
+                          {para}
+                        </p>
+                      ))}
+                  </section>
+                  <section>
+                    <SectionLabel>When to use it</SectionLabel>
+                    <p>{content.advanced.whenToUse}</p>
+                  </section>
+                  <section>
+                    <SectionLabel>Our model</SectionLabel>
+                    <p>{content.advanced.ourModel}</p>
+                  </section>
+                  {content.advanced.references.length > 0 && (
+                    <section>
+                      <SectionLabel>References</SectionLabel>
+                      <ul className="space-y-1">
+                        {content.advanced.references.map((ref, i) => (
+                          <li key={i}>
+                            <a
+                              href={ref.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="underline"
+                              style={{ color: content.accentColor }}
+                            >
+                              {ref.label}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
                 </>
               )}
             </div>
