@@ -546,3 +546,32 @@ STRUCTURE per element:
 - Advanced > References: linked sources.
 
 FLOW HABITS to mirror: short declarative openers; occasional "you/your" address to the builder; concrete numbers from sources (e.g. "fifty subagents"); end sections on a useful takeaway not a hedge.
+
+## ============================================
+## PHASE G LAYER 2 — STATUS (resume here tomorrow)
+## ============================================
+
+DONE:
+- PanelContent type reshaped to final structure (overview: whatItIs/whatItDoes/connector/example; advanced: howItWorks/code/whereToStart/commonTraps/whenToUse/ourModel/references[]).
+- InfoPanel renders all sections: italic connector, code block, commonTraps as prose, references as new-tab links.
+- ORCHESTRATOR fully wired with final v3 content + code block. END-TO-END TEST PASSED.
+- Panel widened 380 -> 480px.
+- Syntax highlighter (src/components/map/highlightCode.tsx) — VS Code Dark+ palette, comment #6A9955, comment-first tokenizing. Reused by all 7 element code blocks. Colors in palette.ts syntax group.
+- Code font 11px. (Known/accepted: longest 1-2 lines still scroll horizontally — fine, left as-is.)
+- 6 other ElementKinds remapped to new shape as PLACEHOLDERS (still type-check, render distinct).
+
+TODO NEXT — write real content for the remaining 6 ElementKinds, IN THIS ORDER:
+1. MANAGER (most involved: shared core + 4 domain blocks A=Research/B=Data-Analysis/C=Code/D=Comm-Action)
+2. TOOL (capability the manager calls; comment-heavy code; remember NO '#' inside string literals — highlighter limitation)
+3. PLANE-OUTBOUND (Task Dispatch: orchestrator->manager)
+4. PLANE-INBOUND (Result Return: manager->orchestrator, purple)
+5. CAR-OUTBOUND (Tool Call: manager->tool)
+6. CAR-INBOUND (Tool Result: tool->manager)
+
+STYLE — every element MUST match the Orchestrator's voice + flow (see "WRITING FLOW GUIDE" + "ORCHESTRATOR CONTENT FINAL LOCKED v3" entries above). Recap:
+- Voice rules: no em-dashes, no "But" openers, no ask-then-deny, no "spawned"/"doer"/"gotchas". Author-voiced, plain, confident, "you/your" to the builder, concrete source numbers, sections end on a useful takeaway.
+- Overview: "In this world, [element] is the [visual] (PanelTitleTerm)..." anchor -> concept -> italic CONNECTOR pointing at on-screen motion (no viewport-relative directions) -> Example matching what's visible.
+- Advanced: how-it-works -> code (illustrative pseudo-code, "check your AI provider's current SDK", model-neutral "your strongest model" w/ Claude as e.g., numbered steps + teaching comments, NO '#' in strings) -> where-to-start (simple-first, end on AI-assistant note) -> "Common traps to watch for" (FLOWING PROSE 2 paras, lead "The most frequent mistake is...") -> when-to-use -> our-model (map to Anthropic term, note pattern is general) -> references (linked).
+- Model-neutral throughout. Anthropic cited in References as source of the patterns, not as the product being taught.
+
+WORKFLOW for each: draft in chat -> user edits to their voice -> lock to TODO -> wire into BODY.<kind> in element-content.ts -> verify in panel. (Manager is one shared entry, not 4.)
