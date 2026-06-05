@@ -485,3 +485,64 @@ Make it sound human-written, not AI. Rules:
 5. NO "Gotchas." Use "Common pitfalls" (academic). [picked: Common pitfalls]
 6. NO "doer" / "coordinator not a doer" framing.
 General: sound like the author wrote it, plain confident prose, no AI tells.
+
+## ============================================
+## ORCHESTRATOR CONTENT — FINAL LOCKED (v3, author-voiced)
+## This is also the VOICE + FLOW TEMPLATE for all 8 remaining elements.
+## ============================================
+
+### OVERVIEW
+
+**What it is**
+In this world, the orchestrator is the airport at the center, where every plane (Task Dispatch) begins or ends its journey. It represents the lead agent: a single, capable AI model that receives your original request. The orchestrator never does the detailed work itself. Its job is to understand the request deeply enough to break it into smaller, independent pieces that specialized managers can handle. It coordinates the whole effort from the center.
+
+**What it does**
+When a request arrives, the orchestrator analyzes what you are really asking and forms a plan. It divides that plan into separate tasks and hands each one to the manager best suited for it. The managers work while the orchestrator waits, and as their results come back, it holds them together. Once it has everything, it performs the final step: synthesis, combining the separate results into one coherent answer greater than any single piece.
+[CONNECTOR, italic] Watch the planes leaving the airport. Each one carries a task to one of the four specialized managers around it: Research, Data-Analysis, Code, and Communication. The purple planes arriving back are the specific managers reporting their results.
+
+**Example**
+Imagine you ask, "Research the electric vehicle market and chart the top three companies by revenue." A single AI answering alone would have to work through everything in one stream of thought. The orchestrator splits the work instead, sending the market research to the Research manager and the revenue analysis to the Data-Analysis manager at the same time. When each one reports back, the orchestrator combines their findings into a single answer. You get a broader, deeper, and much faster result than one agent working alone could produce.
+
+### ADVANCED
+
+**How it actually works**
+The orchestrator is a single AI model call running with a planning prompt. Its output is a plan made of subtask definitions. Your code reads that plan and, for each subtask, makes a separate AI call (a manager, or "subagent"), and each call runs in its own independent context window. The calls run in parallel. As each one returns a condensed result, the orchestrator collects it, and once all the results are in, it makes a final call to handle synthesis. The orchestrator's own context holds only the plan and the returned summaries, never the full work each manager did. That separation is what lets the system process far more total information than a single context window could ever hold.
+
+**Code** [render as monospace preformatted block]
+(4-step illustrative pseudo-code: PLAN / REMEMBER / DISPATCH IN PARALLEL / SYNTHESIZE, with "check your AI provider's current SDK" header and inline teaching comments. Full block in conversation + prior TODO entry.)
+
+**Where to start**
+Build the simple version before the parallel one. Start with a single loop: one AI call that breaks a request into two or three subtasks, then a separate call for each subtask, and finally a call that combines the answers, all running one after another. Once that sequential version works from end to end, switch the per-subtask calls to run in parallel. Parallelism is an optimization you add later. The core pattern to get right first is decompose, delegate, and synthesize. AI coding assistants can scaffold this loop for you, but there's real value in building the simple version yourself first. It gives you a much clearer sense of what they generate and why.
+
+**Common traps to watch for** [render as flowing prose, 2 paragraphs, NO bullets]
+The most frequent mistake is over-delegating. Early versions of Anthropic's research system spun up fifty subagents for a question that needed one. Your planning prompt has to teach the orchestrator to match its effort to the scale of the request, or costs will climb faster than you'd expect. Closely related is vague delegation. Loose descriptions like "research competitors" cause subagents to duplicate work or wander off course. Every task needs a clear objective, a defined output format, and explicit boundaries.
+Two other traps are easy to miss until they hurt you. On long runs, the context window fills up and earlier content gets dropped, so save the plan to memory early or the orchestrator will lose track of what it set out to do. Since this architecture can burn through a lot of tokens on a single request, it's worth asking whether the quality of the output genuinely justifies the cost.
+
+**When to use it**
+The orchestrator fits work that naturally splits into independent directions: research, multi-file code changes, aggregating from many sources, especially when the total information is more than a single context window can hold. It's the wrong choice for tightly coupled tasks where each step depends on the previous one, or for simple questions a single call handles just fine. In those cases, the coordination adds overhead without adding much of anything.
+
+**Our model**
+What we call the "orchestrator" maps to what Anthropic calls the lead agent in their multi-agent research system, and the central model in the orchestrator-workers workflow from Building Effective Agents. The pattern itself is general and works with any capable model.
+
+**References**
+Building Effective Agents, Anthropic (2024) -> https://www.anthropic.com/engineering/building-effective-agents
+How we built our multi-agent research system, Anthropic (2025) -> https://www.anthropic.com/engineering/multi-agent-research-system
+
+## ============================================
+## WRITING FLOW GUIDE (derived from Orchestrator — apply to all 8 remaining)
+## ============================================
+VOICE: author-written, not AI. Confident, plain, a little warm. (All earlier voice rules still apply: no em-dashes, no "But" openers, no ask-then-deny, no "spawned"/"doer"/"gotchas".)
+
+STRUCTURE per element:
+- Overview > What it is: OPEN with "In this world, [element] is the [visual]..." anchor, name the element's panel-title term in parens once (e.g. "(Task Dispatch)"), then the concept in plain terms.
+- Overview > What it does: the role as connected narrative; END with an italic CONNECTOR pointing at on-screen motion/elements (no viewport-relative directions).
+- Overview > Example: one concrete, relatable scenario that matches what's visible on screen; close with the payoff ("broader, deeper, much faster" style).
+- Advanced > How it actually works: real mechanism, plain technical prose, light jargon defined in passing.
+- Advanced > Code: illustrative pseudo-code, "check your AI provider's current SDK" header, model-neutral ("your strongest model" w/ Claude as e.g.), numbered steps with teaching comments.
+- Advanced > Where to start: simplest-first build path; end with the AI-assistant note ("scaffold... but build the simple version yourself first").
+- Advanced > Common traps to watch for: FLOWING PROSE (2 short paras), not bullets. Lead with "The most frequent mistake is...", weave 3-4 traps into prose.
+- Advanced > When to use it: where it fits + where it's the wrong choice.
+- Advanced > Our model: map our term to Anthropic's; note the pattern is general/model-neutral.
+- Advanced > References: linked sources.
+
+FLOW HABITS to mirror: short declarative openers; occasional "you/your" address to the builder; concrete numbers from sources (e.g. "fifty subagents"); end sections on a useful takeaway not a hedge.
