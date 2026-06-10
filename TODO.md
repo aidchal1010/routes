@@ -747,3 +747,10 @@ Phase H polish:
 2. WELCOME POPUP — screen-covering intro on entering /framework.
 3. BUILD GUIDE — separate top tab, whole-system "how to build this yourself."
 4. SANDBOX — (new) most ambitious; define scope when we get there.
+
+## LEGEND/KEY — DESIGN LOCKED
+- Always-visible static card. NO expand/collapse, no button.
+- Fixed to VIEWPORT top-right (moves with screen, NOT the world; survives pan/zoom unchanged).
+- Content: element swatches+names+motion meaning. Buildings: Orchestrator (purple), Manager (4 domain colors or generic), Tool. Vehicles: Plane = Task Dispatch / Result Return; Car = Tool Call / Tool Result.
+- Style matches InfoPanel (dark card, same fonts/colors).
+- Info panel covers it when open (no move/hide needed). Does NOT pause the world.
