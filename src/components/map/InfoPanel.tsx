@@ -27,8 +27,8 @@ export type PanelContent = {
   };
   advanced: {
     howItWorks: string;
-    code: string; // monospace preformatted block (horizontal scroll if long)
-    whereToStart: string;
+    code?: string; // optional — vehicles have no code; section skipped when absent
+    whereToStart?: string; // optional — vehicles have no build step; skipped when absent
     commonTraps: string; // flowing prose; paragraphs split on blank lines
     whenToUse: string;
     ourModel: string;
@@ -200,16 +200,20 @@ export default function InfoPanel({ content, onClose }: Props) {
                     <SectionLabel>How it actually works</SectionLabel>
                     <p>{content.advanced.howItWorks}</p>
                   </section>
-                  <section>
-                    <SectionLabel>Code</SectionLabel>
-                    <pre className="overflow-x-auto rounded-md border border-night-800 bg-night-900 p-3 font-mono text-[11px] leading-relaxed text-ink-100">
-                      <code>{highlightCode(content.advanced.code)}</code>
-                    </pre>
-                  </section>
-                  <section>
-                    <SectionLabel>Where to start</SectionLabel>
-                    <p>{content.advanced.whereToStart}</p>
-                  </section>
+                  {content.advanced.code && (
+                    <section>
+                      <SectionLabel>Code</SectionLabel>
+                      <pre className="overflow-x-auto rounded-md border border-night-800 bg-night-900 p-3 font-mono text-[11px] leading-relaxed text-ink-100">
+                        <code>{highlightCode(content.advanced.code)}</code>
+                      </pre>
+                    </section>
+                  )}
+                  {content.advanced.whereToStart && (
+                    <section>
+                      <SectionLabel>Where to start</SectionLabel>
+                      <p>{content.advanced.whereToStart}</p>
+                    </section>
+                  )}
                   <section>
                     <SectionLabel>Common traps to watch for</SectionLabel>
                     {content.advanced.commonTraps

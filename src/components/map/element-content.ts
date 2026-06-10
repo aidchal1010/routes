@@ -36,19 +36,6 @@ export function getPlaceholderContent(
 
 type Body = Omit<PanelContent, "elementName" | "accentColor">;
 
-// Placeholder fillers for the fields the reshaped type added. Real per-element copy
-// for these 6 elements lands in Layer 2 (only the orchestrator is wired for real now).
-const PH_CONNECTOR =
-  "Placeholder connector — points to the related on-screen motion. Real copy in Layer 2.";
-const PH_CODE =
-  "// Illustrative pseudo-code lands in Layer 2.\n// Check your AI provider's current SDK.";
-const PH_WHERE_TO_START =
-  "Placeholder — the first concrete build step lands in Layer 2.";
-const PH_WHEN_TO_USE =
-  "Placeholder — where this fits and where it's the wrong choice lands in Layer 2.";
-const PH_OUR_MODEL =
-  "Placeholder — mapping to Anthropic's official term lands in Layer 2.";
-
 // MANAGER CONTENT — FINAL LOCKED (TODO.md "MANAGER CONTENT — FINAL LOCKED").
 // One shared entry serves all four managers: a shared Overview and a shared Advanced,
 // plus a per-manager Specific Domain block selected by the clicked building's id.
@@ -207,9 +194,22 @@ Two other traps are easy to miss until they hurt you. On long runs, the context 
     },
     advanced: {
       howItWorks: `A tool is a function the AI model is allowed to call. You define it with a name, a description of what it does, and the shape of the input it expects. During a run, when the model decides it needs that capability, it produces a structured request to call the tool with specific arguments. Your code receives that request, runs the real function behind it, hitting a search API, querying a database, executing code, and returns the result to the model. The model never runs anything itself. It asks for the call, your code does the work, and the result comes back into the model's context. How well a tool works depends heavily on how clearly you describe it, since the model decides when and how to use it based entirely on that description.`,
-      // PLACEHOLDER — paste the final search_tool dict + execute_tool fn block here.
-      code: `# Final search_tool + execute_tool pseudo-code pending — paste the locked block here.
-# Check your AI provider's current SDK for exact API.`,
+      code: `# Illustrative pseudo-code. Check your AI provider's current SDK for exact API.
+
+# A tool is DEFINED with a clear name, description, and input shape.
+search_tool = {
+    "name": "web_search",
+    "description": "Search the web for current information. Use this when a fact "
+                   "might have changed recently or is not already known.",
+    "input_schema": {"query": "string"},
+}
+
+# The MODEL decides to call the tool and produces a structured request.
+# YOUR code runs the real function and returns the result to the model.
+def execute_tool(call):
+    if call.name == "web_search":
+        return real_search_api(call.query)   # the actual work happens here
+    # ...handle the system's other tools the same way`,
       whereToStart: `Tools are the easiest part to build first, and a good place to begin the whole system. Pick one real capability, a web search, a calculator, a database lookup, and define it with a precise name and a clear description. Wire it to a single AI call and watch the model decide when to reach for it. Get one tool working in a plain back-and-forth before you build any managers or an orchestrator above it. Everything higher in the system is just the coordination of tool calls like this one. AI coding assistants are especially helpful here, but write one tool definition by hand first so the call-and-result shape is clear to you.`,
       commonTraps: `The most frequent mistake is a weak description. The model only knows what a tool does from how you describe it, so a vague description leads to a misused tool. Write the description the way you would document a function for a new teammate, plainly and completely. Anthropic found they spent more time refining their tool descriptions than tuning the main prompt, which is a good sign of where the effort actually pays off. A close second is an ambiguous input format. If a tool can be called in two slightly different ways, the model will eventually pick the wrong one, so make the input hard to misread.
 
@@ -228,110 +228,105 @@ The last trap is asking a single tool to do too much. A tool that tries to handl
       ],
     },
   }),
+  // VEHICLE CONTENT — FINAL LOCKED (TODO.md "VEHICLE CONTENT — FINAL LOCKED"). Lighter
+  // shape: overview has no example; advanced has no code and no whereToStart (vehicles
+  // are operations you don't build). Prose verbatim.
   "plane-outbound": () => ({
     overview: {
-      whatItIs:
-        "This plane is a task dispatch — the orchestrator handing one domain-sized task to a manager. The plane's color matches the manager it's headed to.",
-      whatItDoes:
-        "It carries the orchestrator's instruction down to a manager, who will then work through it using its own tools.",
-      connector: PH_CONNECTOR,
-      example:
-        "The orchestrator sends a 'analyze Q3 financials' task to the finance manager — that flight is this plane.",
+      whatItIs: `In this world, the outbound planes are the colored aircraft leaving the airport for a manager. Each one represents a Task Dispatch: the orchestrator handing a single, self-contained piece of work to one of its managers. The plane is not a thing that sits anywhere. It is the moment of delegation itself, one task leaving the center and traveling to the manager chosen to handle it.`,
+      whatItDoes: `When the orchestrator finishes planning, it sends one task to each manager it has chosen, and each of those hand-offs is an outbound plane. The plane carries everything the manager needs to begin: the objective, the expected format, and the boundaries of the job. Every task that goes out is answered by a result that comes back, so each outbound plane has a matching return plane later. The dispatch is one half of a round trip.`,
+      connector: `Watch a plane leave the airport and fly to a manager. That single flight is one task being handed off. Its answer will return later as a purple plane coming back to the airport.`,
     },
     advanced: {
-      howItWorks:
-        "In code this is the orchestrator calling a manager subagent (or tool) with a scoped task message. The 'flight' is one dispatch in the orchestrator's fan-out; the orchestrator awaits the manager's result before synthesizing.",
-      code: PH_CODE,
-      whereToStart: PH_WHERE_TO_START,
-      commonTraps:
-        "Make dispatches independent so managers can run in parallel. Include only the context a manager needs, since over-stuffing the payload wastes tokens. Tag each dispatch with an id so its returning result can be matched back.",
-      whenToUse: PH_WHEN_TO_USE,
-      ourModel: PH_OUR_MODEL,
+      howItWorks: `A task dispatch is a single call from the orchestrator to a manager, made in its own context window. The orchestrator usually sends several at once rather than one at a time, firing the whole batch of tasks in parallel so the managers can work simultaneously. Each dispatch carries a clear task description, and that description is the entire basis for the manager's work, so its quality decides how well the manager performs.`,
+      commonTraps: `The most frequent mistake is sending a vague task. A dispatch that says only "research competitors" gives the manager too little to work with, and the manager either guesses at the boundaries or wanders off course. A good dispatch names the objective, the format of the answer, and what is in and out of scope.
+
+The second trap is sending too many dispatches at once. Parallel hand-offs are powerful, though each one costs a full manager run, so dispatching more tasks than the request actually needs is a direct waste of tokens and time.`,
+      whenToUse: `A task dispatch is the right move whenever the orchestrator has a piece of work that a specialized manager can handle on its own. If a request splits into independent parts, each part becomes a dispatch. If the work cannot be separated, or one small answer would do, there is nothing to dispatch and a single call is enough.`,
+      ourModel: `A task dispatch maps to the lead agent calling a subagent in Anthropic's multi-agent research system. The pattern is general: a coordinating model handing a scoped task to a worker model, and it applies to any capable model.`,
       references: [
         {
-          label: "Anthropic — Building Effective Agents",
-          url: "https://www.anthropic.com/research/building-effective-agents",
+          label: "Building Effective Agents, Anthropic (2024)",
+          url: "https://www.anthropic.com/engineering/building-effective-agents",
+        },
+        {
+          label: "How we built our multi-agent research system, Anthropic (2025)",
+          url: "https://www.anthropic.com/engineering/multi-agent-research-system",
         },
       ],
     },
   }),
   "plane-inbound": () => ({
     overview: {
-      whatItIs:
-        "This plane is a result returning — a manager handing its finished work back up to the orchestrator. Inbound flights are purple, the orchestrator's color.",
-      whatItDoes:
-        "It carries a manager's synthesized result home, where the orchestrator will combine it with the other managers' results.",
-      connector: PH_CONNECTOR,
-      example:
-        "The finance manager finishes its analysis and sends the summary back up — that return trip is this plane.",
+      whatItIs: `In this world, the inbound planes are the purple aircraft flying back to the airport from a manager. Each one represents a Result Return: a manager sending its finished work back to the orchestrator. Where the outbound plane carried a task out, the return plane carries the answer home. It is the second half of every dispatch, the response to a request that went out earlier.`,
+      whatItDoes: `When a manager finishes its work, it condenses everything it did into a single clean summary and sends that back to the orchestrator. That return trip is the inbound plane. The summary is deliberately compact. The manager does not send back everything its tools produced, only the digested result the orchestrator actually needs. This compression is quiet but important: it is what keeps the orchestrator's context clear enough to combine many managers' answers without overflowing.`,
+      connector: `Watch a purple plane arrive at the airport. That is one manager reporting its finished work. Somewhere earlier, a colored plane left carrying the task this result answers.`,
     },
     advanced: {
-      howItWorks:
-        "In code this is a manager subagent returning its result to the orchestrator. The orchestrator collects all manager results, then runs its final synthesis pass.",
-      code: PH_CODE,
-      whereToStart: PH_WHERE_TO_START,
-      commonTraps:
-        "Return structured results, not free text, so synthesis is reliable. Surface partial or failed results explicitly instead of silently dropping them. Keep results concise, since the orchestrator pays to read every one.",
-      whenToUse: PH_WHEN_TO_USE,
-      ourModel: PH_OUR_MODEL,
+      howItWorks: `A result return is the value a manager hands back when its call completes. The important detail is what it contains: a condensed summary, not the manager's full working history. A manager may have made dozens of tool calls and read a great deal of material, and all of that stays in the manager's own context window. What returns to the orchestrator is the distilled conclusion. That selective return is the mechanism that lets the system process far more total information than the orchestrator's context could hold on its own.`,
+      commonTraps: `The most frequent mistake is returning too much. When a manager sends back its full output instead of a summary, it floods the orchestrator's context and undoes the benefit of the separate window. A return should be the conclusion, not the transcript.
+
+The second trap is returning too little. A summary so terse that it drops key facts forces the orchestrator to dispatch again to recover them, which is slower than returning the right detail the first time. The skill is in returning exactly what the orchestrator needs and nothing more.`,
+      whenToUse: `Every dispatched task ends in a result return, so it is less a choice than a guarantee: any time a manager is given work, its answer comes back this way. The design decision is not whether to return, but how much to include in what comes back.`,
+      ourModel: `A result return maps to a subagent returning its findings to the lead agent in Anthropic's multi-agent research system. The principle of returning a condensed result rather than raw work is general and applies to any capable model.`,
       references: [
         {
-          label: "Anthropic — Building Effective Agents",
-          url: "https://www.anthropic.com/research/building-effective-agents",
+          label: "Building Effective Agents, Anthropic (2024)",
+          url: "https://www.anthropic.com/engineering/building-effective-agents",
+        },
+        {
+          label: "How we built our multi-agent research system, Anthropic (2025)",
+          url: "https://www.anthropic.com/engineering/multi-agent-research-system",
         },
       ],
     },
   }),
   "car-outbound": () => ({
     overview: {
-      whatItIs:
-        "This car is a tool call — a manager invoking one of its tools with a focused input. Its color matches the manager that made the call.",
-      whatItDoes:
-        "It carries a focused input from a manager to one of its tools, which will run and return a result.",
-      connector: PH_CONNECTOR,
-      example:
-        "The data-analysis manager calls its database tool with 'pull the revenue table for Q3' — that trip is this car.",
+      whatItIs: `In this world, the outbound cars are the small vehicles driving from a manager to one of its tools. Each one represents a Tool Call: a manager asking a single tool to do its specific job. If the plane is how the orchestrator delegates to a manager, the car is how a manager reaches for a capability. It is a request traveling a shorter distance, from a manager to the tool right beside it.`,
+      whatItDoes: `When a manager decides it needs something concrete, a search, a calculation, a file, it calls the right tool, and that call is the outbound car. The car carries the specific input the tool needs to do its one job. Just like a dispatch, every tool call is answered: each outbound car has a matching car that brings the result back. A manager often sends several at once when it needs more than one tool.`,
+      connector: `Watch a car drive from a manager out to one of the smaller buildings. That trip is the manager calling a tool. The car that returns is the tool's answer coming back.`,
     },
     advanced: {
-      howItWorks:
-        "In code this is a manager invoking a tool with a narrow input. It's one edge of the manager's fan-out; the manager awaits all tool results before synthesizing.",
-      code: PH_CODE,
-      whereToStart: PH_WHERE_TO_START,
-      commonTraps:
-        "Keep tool calls focused so tools stay simple and parallelizable. Throttle concurrent calls per tool to avoid overload, mirrored here as the road's car cap. Tag each call so its returning result can be matched back.",
-      whenToUse: PH_WHEN_TO_USE,
-      ourModel: PH_OUR_MODEL,
+      howItWorks: `A tool call is a structured request the manager's model produces when it decides it needs a tool. The request names the tool and provides the specific arguments to run it with. Your code receives that request, runs the real function behind the tool, and the result returns to the manager. A manager can issue several tool calls at once when its tasks are independent, the same parallel pattern the orchestrator uses, one level down.`,
+      commonTraps: `The most frequent mistake is an unclear tool definition, which leads the model to call the tool with the wrong arguments or at the wrong time. The call is only as good as the tool's description and input format.
+
+The second trap is calling tools in sequence when they could run at once. If a manager needs three independent lookups, calling them one after another wastes time that a parallel batch would save. Look for independent calls that can be fired together.`,
+      whenToUse: `A tool call is the right move whenever the manager needs something it cannot produce from its own reasoning: live information, an exact computation, a real file, an external action. If the manager can answer from what it already has, no call is needed. The moment it needs the outside world, it makes a call.`,
+      ourModel: `A tool call maps directly to tool use in any agent framework: the model emitting a structured request to run a defined function. This is a standard, general capability and works with any capable model that supports tools.`,
       references: [
         {
-          label: "Anthropic — Building Effective Agents",
-          url: "https://www.anthropic.com/research/building-effective-agents",
+          label: "Building Effective Agents, Anthropic (2024)",
+          url: "https://www.anthropic.com/engineering/building-effective-agents",
+        },
+        {
+          label: "How we built our multi-agent research system, Anthropic (2025)",
+          url: "https://www.anthropic.com/engineering/multi-agent-research-system",
         },
       ],
     },
   }),
   "car-inbound": () => ({
     overview: {
-      whatItIs:
-        "This car is a tool result — a tool returning its output to the manager that called it. It's tinted the tool's lighter shade.",
-      whatItDoes:
-        "It carries a tool's output back to the manager, who will combine it with the other tool results.",
-      connector: PH_CONNECTOR,
-      example:
-        "The database tool returns the Q3 revenue table to the data-analysis manager — that return trip is this car.",
+      whatItIs: `In this world, the inbound cars are the small vehicles returning from a tool back to a manager. Each one represents a Tool Result: a tool handing back the answer to the call it was given. It is the response half of every tool call, the outcome of the one job the tool was asked to do, traveling back to the manager that asked.`,
+      whatItDoes: `When a tool finishes its job, it returns its result, and that return trip is the inbound car. The result is whatever the tool produced: the search hits, the query rows, the output of the code it ran. The manager takes that result, along with the results of any other tools it called, and uses them to do its work. Every tool call ends in one of these returns, which is why you always see cars traveling in both directions along a road.`,
+      connector: `Watch a car come back from a tool to its manager. That is a result being delivered. It answers a call that drove out moments earlier.`,
     },
     advanced: {
-      howItWorks:
-        "In code this is a tool returning its result to the manager that called it. Once all of a manager's outstanding tool calls report back, the manager runs its synthesis pass and returns upward.",
-      code: PH_CODE,
-      whereToStart: PH_WHERE_TO_START,
-      commonTraps:
-        "Return structured, schema-validated results so manager synthesis is reliable. Make tools retry-safe so a manager can re-issue a failed call. Surface errors explicitly rather than returning empty results.",
-      whenToUse: PH_WHEN_TO_USE,
-      ourModel: PH_OUR_MODEL,
+      howItWorks: `A tool result is the value your code returns to the model after running a tool. The model receives it back into its context and uses it to decide what to do next, whether that is calling another tool or finishing its task. A tool returns raw, factual output: the data it was asked to fetch or produce. It does not interpret or summarize. Making sense of the result is the manager's job, not the tool's, which keeps the tool simple and predictable.`,
+      commonTraps: `The most frequent mistake is returning messy or oversized output. If a tool hands back a huge raw blob, it fills the manager's context and makes the model's job harder. Return what is useful, in a form the model can read.
+
+The second trap is hiding failures. When a tool errors, it should return a clear, readable error rather than nothing or a cryptic code, so the model can recognize what happened and react instead of guessing.`,
+      whenToUse: `A tool result happens automatically whenever a tool is called, so like the result return, it is a guarantee rather than a choice. The decision that matters is the shape of what comes back: clean and usable, or raw and hard to work with.`,
+      ourModel: `A tool result maps to the tool-use response in any agent framework: the output of a function call returning to the model. It is a standard, general mechanism and works with any capable model that supports tools.`,
       references: [
         {
-          label: "Anthropic — Building Effective Agents",
-          url: "https://www.anthropic.com/research/building-effective-agents",
+          label: "Building Effective Agents, Anthropic (2024)",
+          url: "https://www.anthropic.com/engineering/building-effective-agents",
+        },
+        {
+          label: "How we built our multi-agent research system, Anthropic (2025)",
+          url: "https://www.anthropic.com/engineering/multi-agent-research-system",
         },
       ],
     },
