@@ -754,3 +754,13 @@ Phase H polish:
 - Content: element swatches+names+motion meaning. Buildings: Orchestrator (purple), Manager (4 domain colors or generic), Tool. Vehicles: Plane = Task Dispatch / Result Return; Car = Tool Call / Tool Result.
 - Style matches InfoPanel (dark card, same fonts/colors).
 - Info panel covers it when open (no move/hide needed). Does NOT pause the world.
+
+## LEGEND/KEY — DESIGN UPDATED (interactive)
+Supersedes the static-only version. Now an interactive table of contents:
+- Always-visible card, top-right, FIXED TO VIEWPORT (moves with screen, survives pan/zoom). Chrome layer, outside pan/zoom transform.
+- Items are CLICKABLE: clicking opens that element's info panel (same panel/content as clicking the real element) AND pauses the world (same as a real element click). (Replaces earlier "does not pause" rule.)
+- Manager row EXPANDS on click to reveal 4 domain sub-rows (Research/Data-Analysis/Code/Comm-Action); each sub-row opens that specific manager's panel (with its domain tab).
+- Swatches use REAL element colors (orchestrator purple, each manager its domain color, tool lighter, plane/car colors) so key mirrors world.
+- Vehicles: Plane (Task Dispatch / Result Return), Car (Tool Call / Tool Result). Clicking opens the relevant vehicle panel.
+- Style matches InfoPanel. Info panel covers legend when open (z-index: panel above).
+- Reuses existing panel-open + pause systems (don't rebuild them; the legend just triggers the same showElement path Map.tsx uses).
