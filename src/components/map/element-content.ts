@@ -195,29 +195,35 @@ Two other traps are easy to miss until they hurt you. On long runs, the context 
       id && id in MANAGER_DOMAINS ? MANAGER_DOMAINS[id as ManagerId] : undefined,
     advanced: MANAGER_ADVANCED,
   }),
+  // TOOL CONTENT — FINAL LOCKED (TODO.md "TOOL CONTENT — FINAL LOCKED"). Prose verbatim.
+  // No `example` — the tool's overview is What it is / What it does / Connector only.
+  // `code` is a clearly-marked placeholder — paste the final search_tool dict +
+  // execute_tool fn block here (NO '#' inside string literals — highlighter limitation).
   tool: () => ({
     overview: {
-      whatItIs:
-        "A tool is a capability a manager can call — a web search, a database query, a code-execution sandbox, an external API. It isn't an agent that plans or delegates; it's a function the manager invokes and gets a result back from.",
-      whatItDoes:
-        "When a manager needs information or an action it can't produce from reasoning alone, it calls a tool with a focused input and waits for the structured result it returns.",
-      connector: PH_CONNECTOR,
-      example:
-        "A research manager hands its web-search tool the query 'recent EU AI regulation,' and the tool returns a list of source links — nothing more.",
+      whatItIs: `In this world, the tools are the small buildings clustered around each manager, the lighter-colored ones at the end of every road. A tool is a single, concrete capability that a manager can use: a web search, a database query, a code run, an email send. Tools are the simplest pieces in the system and the only ones that touch the world outside it. A tool does not think, plan, or make decisions. It does one well-defined job and hands back the result, which is exactly what makes it dependable.`,
+      whatItDoes: `When a manager needs something real, a fact it does not have, a calculation it cannot do in its head, a file, an action in another system, it calls one of its tools. The tool takes the specific request, does its single job, and returns the result. A tool has no memory of the larger task and never talks to other tools. It answers the one call it was given and nothing more. That narrowness is the point: because a tool does exactly one thing, you can trust what it returns and reason about it easily.`,
+      connector: `Watch the cars arriving at a tool from its manager. Each one is the manager asking the tool to do its job, and each car heading back is the tool returning a result. The tool itself never moves. It waits to be called, does its work, and answers.`,
     },
     advanced: {
-      howItWorks:
-        "Build it as a well-described function the agent runtime can call: a clear name, a typed input schema, and a structured return value. The model decides when to call it and with what arguments; the runtime executes it and feeds the result back into the manager's context.",
-      code: PH_CODE,
-      whereToStart: PH_WHERE_TO_START,
-      commonTraps:
-        "Validate tool inputs, since the model can pass malformed or unsafe arguments. Handle failures and timeouts gracefully so one slow tool doesn't block the manager. Keep results concise, because every tool result is read back into the manager's context window. Scope permissions narrowly and give a tool only the access its job requires. Common pitfall: exposing too many tools to one agent, which dilutes tool-choice accuracy.",
-      whenToUse: PH_WHEN_TO_USE,
-      ourModel: PH_OUR_MODEL,
+      howItWorks: `A tool is a function the AI model is allowed to call. You define it with a name, a description of what it does, and the shape of the input it expects. During a run, when the model decides it needs that capability, it produces a structured request to call the tool with specific arguments. Your code receives that request, runs the real function behind it, hitting a search API, querying a database, executing code, and returns the result to the model. The model never runs anything itself. It asks for the call, your code does the work, and the result comes back into the model's context. How well a tool works depends heavily on how clearly you describe it, since the model decides when and how to use it based entirely on that description.`,
+      // PLACEHOLDER — paste the final search_tool dict + execute_tool fn block here.
+      code: `# Final search_tool + execute_tool pseudo-code pending — paste the locked block here.
+# Check your AI provider's current SDK for exact API.`,
+      whereToStart: `Tools are the easiest part to build first, and a good place to begin the whole system. Pick one real capability, a web search, a calculator, a database lookup, and define it with a precise name and a clear description. Wire it to a single AI call and watch the model decide when to reach for it. Get one tool working in a plain back-and-forth before you build any managers or an orchestrator above it. Everything higher in the system is just the coordination of tool calls like this one. AI coding assistants are especially helpful here, but write one tool definition by hand first so the call-and-result shape is clear to you.`,
+      commonTraps: `The most frequent mistake is a weak description. The model only knows what a tool does from how you describe it, so a vague description leads to a misused tool. Write the description the way you would document a function for a new teammate, plainly and completely. Anthropic found they spent more time refining their tool descriptions than tuning the main prompt, which is a good sign of where the effort actually pays off. A close second is an ambiguous input format. If a tool can be called in two slightly different ways, the model will eventually pick the wrong one, so make the input hard to misread.
+
+The last trap is asking a single tool to do too much. A tool that tries to handle several jobs is harder for the model to use correctly than a few focused tools that each do one thing. When a tool starts growing extra responsibilities, that is usually a sign it should be split. Keep each tool narrow and predictable.`,
+      whenToUse: `You reach for a tool whenever an agent has to touch something real: get live information, run an exact calculation, read or change a file, or take an action in another system. If a task can be answered from the model's own knowledge, it may need no tools at all. The moment it needs something current, exact, or external, that is the moment a tool earns its place.`,
+      ourModel: `What we show as "tools" are exactly what the source material calls tools: the concrete capabilities an agent calls to get something done. In some diagrams these leaf capabilities are drawn as another layer of small agents, but we follow the way real systems are built and treat them as tools, defined functions the model invokes rather than independent reasoners. The idea is general and works with any capable model.`,
       references: [
         {
-          label: "Anthropic — Building Effective Agents",
-          url: "https://www.anthropic.com/research/building-effective-agents",
+          label: "Building Effective Agents, Anthropic (2024)",
+          url: "https://www.anthropic.com/engineering/building-effective-agents",
+        },
+        {
+          label: "How we built our multi-agent research system, Anthropic (2025)",
+          url: "https://www.anthropic.com/engineering/multi-agent-research-system",
         },
       ],
     },
