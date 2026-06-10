@@ -721,3 +721,23 @@ Common traps: The most frequent mistake is returning messy or oversized output. 
 When to use it: A tool result happens automatically whenever a tool is called, so like the result return, it is a guarantee rather than a choice. The decision that matters is the shape of what comes back: clean and usable, or raw and hard to work with.
 Our model: A tool result maps to the tool-use response in any agent framework: the output of a function call returning to the model. It is a standard, general mechanism and works with any capable model that supports tools.
 References: Building Effective Agents (2024); How we built our multi-agent research system (2025).
+
+## ============================================
+## PHASE G LAYER 2 — COMPLETE (all 7 elements content-complete)
+## ============================================
+DONE: orchestrator, manager (4 domains + 3rd tab swap + code), tool (+code), 4 vehicles (lighter Advanced, no code/where-to-start). All wired, highlighted, committed.
+Panel: 480px, syntax highlighter (VS Code palette), conditional Code/Where-to-start sections, manager Domain-Specific tab with accent-tinted active tab + index guard.
+
+## REMAINING WORK (Phase G Layer 1b chrome + Phase H polish)
+Layer 1b chrome (not yet built):
+- WELCOME popup: screen-covering intro on entering /framework ("Welcome to Routes...", what the project is, how to use). Upgrade from small popup.
+- LEGEND/key: top-right expandable, does NOT pause.
+- SEARCH: opens matching element's panel (reuses panel system).
+- Top bar / nav chrome.
+- BUILD GUIDE: separate TOP TAB (whole-system: file layout, build order, "building with AI assistance" section, learning path). The per-element "where to start" pieces feed into this.
+Phase H polish:
+- Grid edges still faintly visible (deferred).
+- Panel resizable (deferred from the width bump).
+- Service vehicles, other visual polish.
+- Deploy to Vercel.
+- LinkedIn post.
