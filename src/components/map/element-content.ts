@@ -14,12 +14,24 @@ type ElementKind =
   | "car-outbound"
   | "car-inbound";
 
+// The four manager buildings. The shared manager entry selects one Specific Domain
+// block by the clicked building's id, threaded through from Map.tsx.
+type ManagerId = "manager-a" | "manager-b" | "manager-c" | "manager-d";
+type SpecificDomain = {
+  domainName: string; // short label for the tab, e.g. "Research", "Comm-Action"
+  domain: string;
+  tools: string;
+  whenToRoute: string;
+  example: string;
+};
+
 export function getPlaceholderContent(
   kind: ElementKind,
   elementName: string,
   accentColor: string,
+  elementId?: string, // only managers use this — selects the per-domain block
 ): PanelContent {
-  return { elementName, accentColor, ...BODY[kind](elementName) };
+  return { elementName, accentColor, ...BODY[kind](elementName, elementId) };
 }
 
 type Body = Omit<PanelContent, "elementName" | "accentColor">;
@@ -37,7 +49,87 @@ const PH_WHEN_TO_USE =
 const PH_OUR_MODEL =
   "Placeholder — mapping to Anthropic's official term lands in Layer 2.";
 
-const BODY: Record<ElementKind, (name: string) => Body> = {
+// MANAGER CONTENT — FINAL LOCKED (TODO.md "MANAGER CONTENT — FINAL LOCKED").
+// One shared entry serves all four managers: a shared Overview and a shared Advanced,
+// plus a per-manager Specific Domain block selected by the clicked building's id.
+// Prose is the locked text verbatim. `code` is a clearly-marked placeholder — paste
+// the final run_manager pseudo-code here (NO '#' inside string literals — highlighter
+// treats '#' as a line comment).
+const MANAGER_OVERVIEW = {
+  whatItIs: `In this world, the managers are the four colored buildings around the airport, one in each direction. Each one represents a specialized subagent: an AI model that the orchestrator hands a whole slice of the problem to. A manager works the same way the orchestrator does, just at a smaller scale. It takes the task it was given, breaks it into concrete steps, and reaches for the tools it needs to carry them out. The difference is focus. The orchestrator sees the entire request, while a manager sees only its piece and goes deep on it.`,
+  whatItDoes: `When a task arrives from the orchestrator, the manager reads it and decides which of its tools to use. It sends those tools out to do the concrete work, waits for them to report back, and gathers the results. Once it has what it needs, it does its own small synthesis, combining the tool results into a single clean answer, and sends that answer back to the orchestrator. A manager never passes raw tool output straight up the chain. Its job is to do the work of its domain and return something digested and useful.`,
+  connector: `Watch the cars driving out from a manager to the smaller buildings around it. Each car is the manager calling one of its tools, and each returning car is a result coming back. When the manager has everything it needs, it sends a plane back to the airport carrying its finished answer.`,
+};
+
+// Swaps by manager id. Labels (Domain / Its tools / When to route here / Example) are
+// supplied by the panel, so the prose here drops the inline "Domain:" style prefixes.
+const MANAGER_DOMAINS: Record<ManagerId, SpecificDomain> = {
+  "manager-a": {
+    domainName: "Research",
+    domain: `The Research manager gathers and makes sense of information. It is the one you send out into the world to find things: facts, sources, context, anything the system does not already know. Its work is mostly about breadth, casting a wide net and then narrowing down to what actually matters.`,
+    tools: `Web search, document retrieval, and a source reader. Search finds candidate sources, retrieval pulls the promising ones in full, and the reader digests them into usable notes.`,
+    whenToRoute: `Send a task to the Research manager when the answer lives outside the system and has to be found before anything else can happen. Questions that start with "find out," "look into," or "what is the current state of" belong here.`,
+    example: `Given the task "find the top three electric vehicle makers by sales," the Research manager runs several searches at once, pulls in the most credible sources, reads through them, and returns a short ranked list with the figures that back it up. The orchestrator never sees the dozens of pages it skimmed, only the clean findings.`,
+  },
+  "manager-b": {
+    domainName: "Data-Analysis",
+    domain: `The Data-Analysis manager works with structured data and numbers. Where Research finds information, this manager computes on it: querying, calculating, comparing, and turning raw figures into something a person can actually read.`,
+    tools: `A database query tool, a code execution environment, and a chart generator. It pulls the data, runs analysis code over it, and renders the result into a visual when that makes the answer clearer.`,
+    whenToRoute: `Send a task to the Data-Analysis manager when the work involves real numbers that need to be fetched, computed, or compared. Anything that sounds like "calculate," "compare the figures," or "show the trend" belongs here.`,
+    example: `Given the task "compare these three companies by revenue growth," the Data-Analysis manager queries a database for the raw figures, runs code to compute the growth rates, generates a chart of the comparison, and returns the finished analysis. It hands back the conclusion and the chart, not the thousands of rows it started with.`,
+  },
+  "manager-c": {
+    domainName: "Code",
+    domain: `The Code manager reads and changes software. It is the one that touches a real codebase: understanding what is there, making edits, and checking that its changes actually work before reporting back.`,
+    tools: `File read and write, a test runner, repository search, and a linter or type checker. It finds the relevant files, edits them, runs the tests, and checks its work for errors, often looping through these until the change holds.`,
+    whenToRoute: `Send a task to the Code manager when the work means reading or modifying an actual codebase. Tasks like "fix the failing test," "add this feature," or "find where this function is used" belong here.`,
+    example: `Given the task "fix the failing login test," the Code manager searches the repository for the relevant files, reads them, makes an edit, runs the test suite, and checks the result. If the test still fails, it tries again with its tools until it passes, then reports back whether the fix worked.`,
+  },
+  "manager-d": {
+    domainName: "Comm-Action",
+    domain: `The Communication-Action manager interacts with the outside world on your behalf. The other managers find, compute, and build. This one acts: it sends, schedules, and updates real systems, the steps that actually change something rather than just producing information.`,
+    tools: `Email and messaging, a calendar, and a records system such as a CRM. It can reach out, find or book a time, and update the system of record to reflect what happened.`,
+    whenToRoute: `Send a task to the Communication-Action manager when the work ends in a real action rather than an answer. Anything phrased as "send," "schedule," "notify," or "update the record" belongs here.`,
+    example: `Given the task "schedule a follow-up with the client," the Communication-Action manager checks the calendar for an open slot, drafts and sends the invitation, updates the client's record to log the follow-up, and returns confirmation that it is done. The result is not a report, it is a change in the real world.`,
+  },
+};
+
+const MANAGER_ADVANCED = {
+  howItWorks: `A manager is a separate AI model call with its own independent context window, running a prompt scoped to its domain. It receives a task description from the orchestrator: an objective, an expected output format, and the boundaries of what it should and should not do. From there it operates like a small orchestrator of its own. It decides which tools to call, often calls several at once, reads what they return, and may call more before it is finished. When the work is done, it condenses everything into a summary for the orchestrator, the digested result rather than the raw tool output. That separate context window is the whole point. A manager can work through a large volume of tool results without ever crowding the orchestrator's context.`,
+  code: `# Illustrative pseudo-code. Check your AI provider's current SDK for exact API.
+
+# A manager runs in its OWN context window and calls tools to do real work.
+def run_manager(task):
+    # A capable, cost-efficient model is fine here. The orchestrator already
+    # did the heavy planning; the manager handles focused, scoped work.
+    response = ai.create(
+        model="a capable, cost-efficient model",   # e.g. a mid-tier frontier model
+        system=MANAGER_PROMPT_FOR_DOMAIN,          # a prompt scoped to this domain
+        tools=DOMAIN_TOOLS,                        # the tools this manager is allowed to call
+        input=task.description,                    # objective, output format, boundaries
+    )
+    # The model chooses which tools to call. The loop runs each one, feeds the
+    # results back, and repeats until the manager is done, then returns a summary.
+    return run_tool_loop(response)`,
+  whereToStart: `Build one manager before you build four. Pick a single domain, write a focused prompt for it, give it one or two tools, and get the basic loop working on its own: receive a task, call a tool, return a summary. Do this before any orchestrator exists above it. A manager is really just a scoped agent with a small set of tools, and once one of them works end to end, the orchestrator is simply the thing that calls several of them at once. AI coding assistants are good at wiring up the tool-calling loop, but get one tool working by hand first so the call-and-result cycle is clear to you.`,
+  commonTraps: `The most common mistake is letting a manager return everything its tools produced. When a manager passes raw output straight up to the orchestrator, it floods the orchestrator's context and erases the benefit of giving the manager its own context window in the first place. A manager has to summarize before it reports back. The second trap is a fuzzy task description. A manager given a vague assignment will wander outside its lane, so the task it receives needs clear boundaries about what belongs to it and what does not.
+
+The other trap is tool sprawl. It is tempting to give a capable manager a large pile of tools, but more tools make its choices harder and its mistakes more frequent. A focused manager with a few well-chosen, domain-relevant tools is more reliable than one holding everything. Keep each manager's toolset tight.`,
+  whenToUse: `You add a layer of managers when a single agent can no longer hold all the work in one context window, or when the problem splits into clear domains that each benefit from focused handling. If your task is small enough for one agent with a few tools, you do not need this layer at all. Reach for it only when the size of the work or the separation of domains makes the split worth the coordination it costs.`,
+  ourModel: `What we call a "manager" is what Anthropic calls a subagent in their multi-agent research system. We use "manager" because it captures the role well: it manages a domain and the tools beneath it. Giving our managers their own tools is how we show the orchestrator-workers pattern composed, a subagent that is itself a small orchestrator over its own tools. The underlying idea is general and works with any capable model.`,
+  references: [
+    {
+      label: "Building Effective Agents, Anthropic (2024)",
+      url: "https://www.anthropic.com/engineering/building-effective-agents",
+    },
+    {
+      label: "How we built our multi-agent research system, Anthropic (2025)",
+      url: "https://www.anthropic.com/engineering/multi-agent-research-system",
+    },
+  ],
+};
+
+const BODY: Record<ElementKind, (name: string, id?: string) => Body> = {
   orchestrator: () => ({
     // FINAL LOCKED v3 content (TODO.md "ORCHESTRATOR CONTENT — FINAL LOCKED (v3)").
     // Prose is the locked text verbatim. `code` is a clearly-marked placeholder —
@@ -94,31 +186,14 @@ Two other traps are easy to miss until they hurt you. On long runs, the context 
       ],
     },
   }),
-  manager: (name) => ({
-    overview: {
-      whatItIs: `${name} is a domain-specific sub-orchestrator — a specialized agent that owns one slice of the problem, the way a team lead owns a project area.`,
-      whatItDoes:
-        "It receives a task dispatched from the orchestrator, works through it step by step, calls whichever of its tools it needs along the way, and synthesizes the results into a single answer it hands back up.",
-      connector: PH_CONNECTOR,
-      example:
-        "Asked to 'summarize last quarter's support tickets,' it might call a database tool to pull the tickets, an analysis tool to cluster them by theme, then draft the summary itself — combining the tool results into one answer.",
-    },
-    advanced: {
-      howItWorks:
-        "Build it as a tool-using agent loop: the manager calls its tools, collects their structured results, and runs a synthesis pass. Managers never talk to peer managers — they only call their own tools and report back to the orchestrator (the no-peer-coordination rule, kept deliberately to avoid tangled cross-team dependencies).",
-      code: PH_CODE,
-      whereToStart: PH_WHERE_TO_START,
-      commonTraps:
-        "Cache the system prompt — it's stable across calls and large. Add retries with backoff on tool failures so one flaky tool doesn't sink the cycle. Set a synthesis timeout or safety cap so a stuck tool call can't block the manager forever. Log call to result per tool for observability. Common pitfall: over-calling tools on trivial tasks, since every tool call adds latency and cost.",
-      whenToUse: PH_WHEN_TO_USE,
-      ourModel: PH_OUR_MODEL,
-      references: [
-        {
-          label: "Anthropic — Building Effective Agents",
-          url: "https://www.anthropic.com/research/building-effective-agents",
-        },
-      ],
-    },
+  // All four managers share this one entry. The clicked building's id (threaded from
+  // Map.tsx) selects the Specific Domain block; the `id in MANAGER_DOMAINS` guard
+  // degrades to undefined on a missing/unknown id rather than indexing past the map.
+  manager: (_name, id) => ({
+    overview: MANAGER_OVERVIEW,
+    specificDomain:
+      id && id in MANAGER_DOMAINS ? MANAGER_DOMAINS[id as ManagerId] : undefined,
+    advanced: MANAGER_ADVANCED,
   }),
   tool: () => ({
     overview: {

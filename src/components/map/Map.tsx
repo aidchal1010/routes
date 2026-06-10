@@ -420,6 +420,7 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
                     "manager",
                     `MANAGER · ${config.domain}`,
                     config.colorBase,
+                    id,
                   ),
                 )
               }

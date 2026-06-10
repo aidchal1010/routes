@@ -14,6 +14,15 @@ export type PanelContent = {
     whatItIs: string;
     whatItDoes: string;
     connector: string; // italic line rendered after whatItDoes, inside "What it does"
+    example?: string; // optional — managers omit it (their example lives in specificDomain)
+  };
+  // Manager-only: the per-domain block that swaps based on which manager was clicked.
+  // Renders as a dedicated "Domain Specific" tab. Absent for all other elements.
+  specificDomain?: {
+    domainName: string; // short label shown in the tab, e.g. "Research", "Comm-Action"
+    domain: string;
+    tools: string;
+    whenToRoute: string;
     example: string;
   };
   advanced: {
@@ -32,13 +41,26 @@ type Props = {
   onClose: () => void;
 };
 
-type Tab = "overview" | "advanced";
+type Tab = "overview" | "domain" | "advanced";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <h3 className="mb-1.5 text-xs uppercase tracking-widest text-ink-400">
       {children}
     </h3>
+  );
+}
+
+// A labeled sub-part inside the manager-only "Domain Specific" tab. Smaller, dimmer
+// label than SectionLabel so it reads as a sub-row, not a peer section heading.
+function SubRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <span className="text-[11px] uppercase tracking-widest text-ink-400">
+        {label}
+      </span>
+      <p className="mt-0.5">{children}</p>
+    </div>
   );
 }
 
@@ -60,6 +82,29 @@ export default function InfoPanel({ content, onClose }: Props) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [content, onClose]);
+
+  // Tab set is derived from what content exists: Overview + Advanced always, and the
+  // manager-only Domain Specific tab spliced between them when specificDomain is present.
+  const tabs: { key: Tab; label: string }[] = content
+    ? [
+        { key: "overview", label: "Overview" },
+        ...(content.specificDomain
+          ? [
+              {
+                key: "domain" as const,
+                label: `Domain Specific (${content.specificDomain.domainName})`,
+              },
+            ]
+          : []),
+        { key: "advanced", label: "Advanced" },
+      ]
+    : [];
+
+  // Guard the active tab against an out-of-range key. When content swaps from a 3-tab
+  // manager (tab="domain") to a 2-tab element, the reset effect runs *after* this render,
+  // so `tab` may still be "domain" while it's no longer available — fall back to Overview
+  // for this render so the body never reads a missing block.
+  const activeKey: Tab = tabs.some((t) => t.key === tab) ? tab : "overview";
 
   return (
     <AnimatePresence>
@@ -96,19 +141,14 @@ export default function InfoPanel({ content, onClose }: Props) {
 
             {/* Tabs */}
             <div className="mt-4 flex gap-5 border-b border-night-800 px-5">
-              {(
-                [
-                  ["overview", "Overview"],
-                  ["advanced", "Advanced"],
-                ] as const
-              ).map(([key, label]) => {
-                const active = tab === key;
+              {tabs.map(({ key, label }) => {
+                const active = activeKey === key;
                 return (
                   <button
                     key={key}
                     type="button"
                     onClick={() => setTab(key)}
-                    className={`-mb-px border-b-2 pb-2 text-sm transition-colors ${
+                    className={`-mb-px whitespace-nowrap border-b-2 pb-2 text-sm transition-colors ${
                       active ? "text-ink-100" : "border-transparent text-ink-400 hover:text-ink-100"
                     }`}
                     style={active ? { borderColor: content.accentColor } : undefined}
@@ -121,7 +161,7 @@ export default function InfoPanel({ content, onClose }: Props) {
 
             {/* Body */}
             <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5 text-[13px] leading-relaxed text-terminal">
-              {tab === "overview" ? (
+              {activeKey === "overview" && (
                 <>
                   <section>
                     <SectionLabel>What it is</SectionLabel>
@@ -134,12 +174,27 @@ export default function InfoPanel({ content, onClose }: Props) {
                       {content.overview.connector}
                     </p>
                   </section>
-                  <section>
-                    <SectionLabel>Example</SectionLabel>
-                    <p>{content.overview.example}</p>
-                  </section>
+                  {content.overview.example && (
+                    <section>
+                      <SectionLabel>Example</SectionLabel>
+                      <p>{content.overview.example}</p>
+                    </section>
+                  )}
                 </>
-              ) : (
+              )}
+              {activeKey === "domain" && content.specificDomain && (
+                // Sub-rows sit directly in the tab — the active tab carries the accent
+                // tint, so no bordered box is needed here.
+                <div className="space-y-4">
+                  <SubRow label="Domain">{content.specificDomain.domain}</SubRow>
+                  <SubRow label="Its tools">{content.specificDomain.tools}</SubRow>
+                  <SubRow label="When to route here">
+                    {content.specificDomain.whenToRoute}
+                  </SubRow>
+                  <SubRow label="Example">{content.specificDomain.example}</SubRow>
+                </div>
+              )}
+              {activeKey === "advanced" && (
                 <>
                   <section>
                     <SectionLabel>How it actually works</SectionLabel>
