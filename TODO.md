@@ -741,3 +741,9 @@ Phase H polish:
 - Service vehicles, other visual polish.
 - Deploy to Vercel.
 - LinkedIn post.
+
+## REMAINING BUILD ORDER (confirmed)
+1. LEGEND/KEY — top-right expandable reference. Does NOT pause the world. Shows what each element (orchestrator/manager/tool/plane/car) is at a glance.
+2. WELCOME POPUP — screen-covering intro on entering /framework.
+3. BUILD GUIDE — separate top tab, whole-system "how to build this yourself."
+4. SANDBOX — (new) most ambitious; define scope when we get there.
