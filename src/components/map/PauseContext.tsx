@@ -15,7 +15,11 @@ type PauseContextValue = {
 const PauseContext = createContext<PauseContextValue | null>(null);
 
 export function PauseProvider({ children }: { children: React.ReactNode }) {
-  const [paused, setPaused] = useState(false);
+  // Start paused so the world is frozen on first paint, before the user is oriented.
+  // FrameworkShell resumes once it knows the welcome won't auto-show (or when it's
+  // dismissed). PauseProvider is only mounted on /framework, so nothing else relies on
+  // the prior `false` default.
+  const [paused, setPaused] = useState(true);
   const value = useMemo<PauseContextValue>(
     () => ({
       paused,
