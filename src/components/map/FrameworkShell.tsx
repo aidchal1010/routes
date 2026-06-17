@@ -5,6 +5,7 @@ import { usePause } from "./PauseContext";
 import InfoPanel, { type PanelContent } from "./InfoPanel";
 import Map from "./Map";
 import WelcomeModal from "./WelcomeModal";
+import Legend from "../ui/Legend";
 
 // localStorage flag set when the visitor checks "don't show again". Absent = the
 // welcome auto-shows on entering /framework.
@@ -72,6 +73,7 @@ export default function FrameworkShell() {
   return (
     <>
       <Map onElementClick={showElement} onBackgroundClick={handleBackground} />
+      <Legend onElementClick={showElement} />
       <InfoPanel content={panelContent} onClose={close} />
       <button
         type="button"
