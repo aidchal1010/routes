@@ -825,4 +825,41 @@ SEPARATE CLEANUP (flag, not part of Build Guide)
   pattern-mode). Needs a reconciliation pass so it stops being a stale "canon."
   For the Build Guide, TODO.md is the source of truth.
 
+## BUILD GUIDE — BUILT (Part A top bar + Part B route; content is DRAFT)
+
+Implemented after Claude Code review of the proposed decisions above. What shipped:
+- TopBar (src/components/ui/TopBar.tsx): persistent bar, World | Build Guide nav
+  (next/link + usePathname). Reserves vertical space (world fills below it) so it
+  never occludes the north Research manager. Never calls usePause (renders on the
+  guide route, which has no PauseProvider).
+- Route /framework/build-guide (src/app/framework/build-guide/page.tsx): separate,
+  SCROLLABLE document page (flex col, content overflow-y-auto), no PauseProvider.
+- BuildGuide + build-guide-content.ts (src/components/build-guide/): structured
+  DRAFT content (lock prose later, like the welcome copy). Sections: what you're
+  building, file layout, order of assembly, which models where (table), vocabulary
+  map (table), no-peer-coordination, memory, building with AI assistance, refs.
+- FrameworkShell: now flex-column (TopBar + world flex-1); "?" moved into the bar;
+  welcome auto-show is SESSION-SCOPED (sessionStorage) so World<->Guide nav doesn't
+  re-nag; localStorage "don't show again" still suppresses across sessions.
+
+Decisions that REFINED the proposed block:
+- KEY stays the floating collapsible card (NOT moved into the bar); only repositioned
+  below the bar (top-16). Bar holds nav + "?" only.
+- File layout: manager.py is ONE file parameterized by domain, run 4x (called out
+  explicitly so it doesn't contradict the 4 buildings). tools/ split by domain.
+  memory.py ADDED to the scaffold but presented as a code concept only — memory has
+  no on-screen world element yet (Phase H), so the guide must not imply it's visible.
+- File tree renders as a plain <pre> (NOT highlightCode — box-drawing + '#' would
+  mis-tokenize). highlightCode used only for the real Python memory snippet; no '#'
+  inside string literals (highlighter treats first '#' as a comment).
+- Vocabulary correction: "subagent" is NOT only in mapping notes — it also appears in
+  user-facing prose (manager Overview, orchestrator Advanced). manager.py is still the
+  right name (dominant shipped term); keep exactly one mapping line.
+- AI meta-note KEPT (generic, no product name): "this site itself was built with AI
+  coding assistance."
+
+STILL TODO: lock the draft Build Guide prose; visually verify world centering + pan
+bounds across all four managers after the flex-column change; search box + sandbox
+button (other top-bar slots) deferred.
+
   

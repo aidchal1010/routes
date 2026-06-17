@@ -155,7 +155,7 @@ export default function Legend({ onElementClick }: Props) {
           setFocused(false);
         }
       }}
-      className="fixed right-4 top-4 z-40 w-72 rounded-xl border border-night-800 bg-night-950 shadow-2xl"
+      className="fixed right-4 top-16 z-40 w-72 rounded-xl border border-night-800 bg-night-950 shadow-2xl"
     >
       {/* Header: always visible. Focusable so Tab opens the body; hover opens it too. */}
       <button
