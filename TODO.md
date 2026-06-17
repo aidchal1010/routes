@@ -764,3 +764,65 @@ Supersedes the static-only version. Now an interactive table of contents:
 - Vehicles: Plane (Task Dispatch / Result Return), Car (Tool Call / Tool Result). Clicking opens the relevant vehicle panel.
 - Style matches InfoPanel. Info panel covers legend when open (z-index: panel above).
 - Reuses existing panel-open + pause systems (don't rebuild them; the legend just triggers the same showElement path Map.tsx uses).
+
+## BUILD GUIDE — DECISIONS (PROPOSED, pending Claude Code review)
+
+MECHANISM
+- Separate Next.js route (/framework/build-guide), reached via a top-level nav
+  bar. This is "Tab 2" to the world's "Tab 1" (DESIGN.md already frames the
+  world as Tab 1). Gives a deep-linkable URL for the LinkedIn post.
+- PREREQUISITE: build the top-bar / nav shell FIRST. It does not exist yet —
+  FrameworkShell has no top bar, and the "?" welcome button is a placeholder
+  that folds into it. Build order: nav shell -> Build Guide -> sandbox.
+- Chrome: the Build Guide route gets minimal chrome (the shared top bar = the
+  way back to the world). Legend and welcome modal stay world-only.
+
+FORMAT RULING (resolves the panels-vs-guide tension; also covers welcome popup)
+- Concept panels stay strict no-bullets flowing prose.
+- The Build Guide (and the welcome popup) MAY use structural formatting where it
+  aids comprehension: a file tree as a code block, numbered build steps.
+- All voice rules still apply everywhere: no em-dashes, no "But" openers, no
+  ask-then-deny, no "spawned"/"gotchas"/"doer", author-voiced.
+
+VOCABULARY + LANGUAGE (file layout)
+- Lead with the site's vocabulary: manager, not subagent. "subagent" appears
+  only as the Anthropic mapping note, same as the per-element "Our model."
+- File names by role: orchestrator.py, manager.py, tools.py, prompts/.
+- Use Python as the concrete illustrative language for the tree (most relatable
+  for agent tutorials). Surrounding prose stays stack-neutral: "check your
+  provider's current SDK."
+
+MODEL-CHOICE BOUNDARY (avoid two sources)
+- Per-element Advanced states the strong-lead / cheaper-workers principle only
+  as it touches that element.
+- The Build Guide owns the single system-wide model strategy and does not
+  re-argue it per element.
+
+BUILDING WITH AI ASSISTANCE (keep neutral)
+- Phrase the meta-note generically: "this site was built with AI coding
+  assistance." Honest, not a product plug — consistent with the per-element
+  "e.g. Claude Code or similar." Do not make the guide a Claude pitch.
+
+LEARNING PATH ORDER (was undefined)
+- orchestrator -> the four managers (by domain) -> tools -> the flow (planes:
+  dispatch then return; cars: call then result). Each step links the element's
+  panel. The build-order section follows this same sequence.
+
+SECTION OUTLINE
+1. What you'll build (one-paragraph restatement of the pattern)
+2. The learning path (order to understand the pieces, links to panels)
+3. Project file layout (the agent-system tree, model-neutral prose)
+4. Build order (assembly sequence; aggregates per-element "Where to start";
+   ends on simple-first / add-parallelism-last)
+5. Which models go where (system-wide strategy; Anthropic Opus-lead/
+   Sonnet-worker as cited example)
+6. Tech stack (model-neutral: an LLM SDK, async for parallel calls)
+7. Building with AI assistance (scaffold yes, understand first; meta-note)
+8. References (the two Anthropic sources)
+
+SEPARATE CLEANUP (flag, not part of Build Guide)
+- DESIGN.md has drifted (Worker->Tool, SidePanel->InfoPanel, MDX nodes/patterns,
+  pattern-mode). Needs a reconciliation pass so it stops being a stale "canon."
+  For the Build Guide, TODO.md is the source of truth.
+
+  
