@@ -863,3 +863,43 @@ bounds across all four managers after the flex-column change; search box + sandb
 button (other top-bar slots) deferred.
 
   
+
+## SANDBOX — DECISIONS (scoping, this session)
+
+CONCEPT
+- Separate top-level tab (like Build Guide). Opens a blank blueprint grid, same
+  aesthetic as the world. A palette on the side holds the draggable pieces.
+- Build by drag-and-drop: drop the orchestrator, then managers, then tools.
+- Manager palette cycles color/domain: each manager you place advances the
+  palette to the next, so placed managers stay distinct.
+- Tools unlock only after a manager is on the grid (tools belong to a manager);
+  a dropped tool attaches to the nearest / active manager.
+- Auto-wiring: dropping a manager draws the flight path from the orchestrator;
+  dropping a tool draws the road to its manager. Only orchestrator->manager
+  (flight) and manager->tool (road) ever draw, never manager->manager, so the
+  sandbox enforces the no-peer-coordination rule by construction.
+
+CONTROLS / MODES
+- Build mode (default): static; place pieces, paths auto-draw, no motion.
+- Play: snapshot the built layout and run the causal motion on it.
+- Pause: freeze the motion.  Restart: clear everything back to blank build mode.
+- Motion runs on the Play snapshot, NOT continuously during build. Keeps
+  vehicles from flying mid-build and lets the F.2 motion run on a finished
+  layout instead of one changing under it.
+
+SCOPE
+- v1 (ship first): bounded build-and-watch with the FOUR REAL DOMAINS fixed
+  (Research / Data-Analysis / Code / Comm-Action). Restart + Play/Pause. No label
+  editing. The capstone of the teaching site, and bounded.
+- v2 (later): personalization — free-text rename of orchestrator/managers so the
+  sandbox becomes a tool to design the visitor's OWN system. Turns it from
+  lesson-reinforcement into a design tool.
+- Middle option if fixed feels rigid: pick a label from the four domains as you
+  place each manager (a small menu, not free text).
+
+ENGINEERING NOTE (main lift)
+- Dynamic auto-pathing: generate bezier flight paths (orchestrator->manager) and
+  curved roads (manager->tool) between dropped points, matching the blueprint
+  aesthetic, instead of the hand-placed curves in world-layout.ts.
+- Parameterize the Phase F.2 causal motion to take the sandbox's dynamic layout
+  instead of the hardcoded world. Watch the fragile dispatchCycle string-join.
