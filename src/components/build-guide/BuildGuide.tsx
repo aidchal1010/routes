@@ -1,8 +1,8 @@
 import { highlightCode } from "../map/highlightCode";
-import { BUILD_GUIDE } from "./build-guide-content";
+import { BUILD_GUIDE, type Block } from "./build-guide-content";
 
 // Static, server-rendered Build Guide document. The whole-system assembly manual that
-// the per-element panels deliberately leave out. Draft prose lives in build-guide-content.ts.
+// the per-element panels deliberately leave out. Prose lives in build-guide-content.ts.
 
 function Section({
   title,
@@ -18,6 +18,36 @@ function Section({
       </h2>
       <div className="space-y-4">{children}</div>
     </section>
+  );
+}
+
+// Renders an ordered list of prose/code blocks for the assembly sections. Routing by fence
+// language: "python" goes through highlightCode (the established palette.syntax colors);
+// "text" and "shell" render as a plain <pre>, never highlighted. Both <pre> variants share
+// the styling used by the File layout / Memory blocks.
+const PRE_CLASS =
+  "overflow-x-auto rounded-md border border-night-800 bg-night-900 p-4 font-mono text-[12px] leading-relaxed text-ink-100";
+
+function Blocks({ blocks }: { blocks: Block[] }) {
+  return (
+    <>
+      {blocks.map((b, i) => {
+        if (b.kind === "p") return <p key={i}>{b.text}</p>;
+        if (b.lang === "python") {
+          return (
+            <pre key={i} className={PRE_CLASS}>
+              <code>{highlightCode(b.code)}</code>
+            </pre>
+          );
+        }
+        // "text" / "shell": plain <pre>, no highlighter.
+        return (
+          <pre key={i} className={PRE_CLASS}>
+            {b.code}
+          </pre>
+        );
+      })}
+    </>
   );
 }
 
@@ -37,13 +67,19 @@ export default function BuildGuide() {
         <p>{g.whatYouBuild.body}</p>
       </Section>
 
+      <Section title="How a request flows">
+        <Blocks blocks={g.howRequestFlows.blocks} />
+      </Section>
+
       <Section title="File layout">
         {/* Plain <pre>: box-drawing chars + inline notes must not go through the
             syntax highlighter (the first "#" would be read as a comment). */}
-        <pre className="overflow-x-auto rounded-md border border-night-800 bg-night-900 p-4 font-mono text-[12px] leading-relaxed text-ink-100">
-          {g.fileLayout.tree}
-        </pre>
+        <pre className={PRE_CLASS}>{g.fileLayout.tree}</pre>
         <p>{g.fileLayout.note}</p>
+      </Section>
+
+      <Section title="The prompts">
+        <Blocks blocks={g.prompts.blocks} />
       </Section>
 
       <Section title="Order of assembly">
@@ -58,6 +94,14 @@ export default function BuildGuide() {
             </li>
           ))}
         </ol>
+      </Section>
+
+      <Section title="Making it run">
+        <Blocks blocks={g.makingItRun.blocks} />
+      </Section>
+
+      <Section title="From one loop to the system">
+        <Blocks blocks={g.fromLoop.blocks} />
       </Section>
 
       <Section title="Which models where">
@@ -138,7 +182,7 @@ export default function BuildGuide() {
 
       <Section title="Memory">
         <p>{g.memory.body}</p>
-        <pre className="overflow-x-auto rounded-md border border-night-800 bg-night-900 p-4 font-mono text-[12px] leading-relaxed text-ink-100">
+        <pre className={PRE_CLASS}>
           <code>{highlightCode(g.memory.code)}</code>
         </pre>
         <p className="text-ink-400">{g.memory.note}</p>

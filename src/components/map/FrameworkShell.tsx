@@ -8,12 +8,17 @@ import WelcomeModal from "./WelcomeModal";
 import Legend from "../ui/Legend";
 import TopBar from "../ui/TopBar";
 
-// localStorage flag: set when the visitor checks "don't show again" — suppresses the
-// welcome across sessions. sessionStorage flag: set whenever the welcome closes — so the
-// welcome auto-shows only once per browser session, not on every mount. Without it,
-// navigating World -> Build Guide -> World would re-trigger the welcome each time.
+// localStorage flag: set when the visitor checks "don't show again" — the permanent
+// opt-out that suppresses the welcome across page loads. The welcome otherwise auto-shows
+// on every fresh entry to the world screen.
 const WELCOME_DISMISSED_KEY = "routes-welcome-dismissed";
-const WELCOME_SEEN_SESSION_KEY = "routes-welcome-seen-session";
+
+// In-memory flag: set whenever the welcome closes. It resets on a full page load/reload
+// (so the welcome reshows on each fresh visit) but persists across Next.js client-side
+// navigation while the app stays loaded — so toggling World <-> Build Guide does NOT
+// re-trigger the welcome. This is deliberately module-scoped, not sessionStorage, because
+// sessionStorage survives reloads too and would wrongly suppress the welcome on reload.
+let welcomeSeenThisLoad = false;
 
 export default function FrameworkShell() {
   const [panelContent, setPanelContent] = useState<PanelContent | null>(null);
@@ -23,15 +28,14 @@ export default function FrameworkShell() {
 
   // On mount, decide whether the welcome auto-shows. The world starts paused (see
   // PauseContext) so motion is frozen before the user is oriented. Skip it if the visitor
-  // opted out ("don't show again") OR has already seen it this session, and resume at
-  // once. Read in an effect (client only) to avoid a hydration mismatch.
+  // opted out ("don't show again") OR has already closed it during this page load (e.g.
+  // after a World -> Build Guide -> World tab toggle), and resume at once. Read in an
+  // effect (client only) to avoid a hydration mismatch.
   useEffect(() => {
     const dismissed =
       window.localStorage.getItem(WELCOME_DISMISSED_KEY) === "true";
-    const seenThisSession =
-      window.sessionStorage.getItem(WELCOME_SEEN_SESSION_KEY) === "true";
     setWelcomeDismissed(dismissed);
-    if (dismissed || seenThisSession) {
+    if (dismissed || welcomeSeenThisLoad) {
       resume();
     } else {
       setWelcomeOpen(true);
@@ -56,13 +60,14 @@ export default function FrameworkShell() {
     if (panelContent) close();
   };
 
-  // Closing the welcome resumes the world, marks it seen for this session, and persists
-  // the checkbox choice: opting out writes the flag; leaving it unchecked clears it.
+  // Closing the welcome resumes the world, marks it seen for this page load (so tab
+  // toggling won't re-trigger it), and persists the checkbox choice: opting out writes the
+  // flag; leaving it unchecked clears it.
   const closeWelcome = (dontShowAgain: boolean) => {
     setWelcomeOpen(false);
     resume();
     setWelcomeDismissed(dontShowAgain);
-    window.sessionStorage.setItem(WELCOME_SEEN_SESSION_KEY, "true");
+    welcomeSeenThisLoad = true;
     if (dontShowAgain) {
       window.localStorage.setItem(WELCOME_DISMISSED_KEY, "true");
     } else {
