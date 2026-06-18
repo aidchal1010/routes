@@ -166,6 +166,19 @@ export const FLIGHT_PATHS: readonly FlightPathConfig[] = [
   },
 ] as const;
 
+// The complete set of data the Map renders + animates. Map reads everything through a
+// value of this shape (defaulting to WORLD_LAYOUT below), so the same motion engine can run
+// on the hand-placed world OR on a layout the Sandbox builds at runtime. `airport` is
+// nullable so a partially-built sandbox layout (no orchestrator yet) is representable.
+export type WorldLayout = {
+  airport: { cx: number; cy: number } | null;
+  managers: readonly ManagerConfig[];
+  workers: readonly WorkerConfig[];
+  workerLabels: readonly WorkerLabelConfig[];
+  roads: readonly RoadConfig[];
+  flightPaths: readonly FlightPathConfig[];
+};
+
 export const ROADS: readonly RoadConfig[] = [
   { id: "road-a-a1", managerId: "manager-a", workerId: "worker-a1",
     d: "M 2200 350 C 2005 220, 1810 155, 1745 77" },
@@ -194,3 +207,15 @@ export const ROADS: readonly RoadConfig[] = [
   { id: "road-d-d3", managerId: "manager-d", workerId: "worker-d3",
     d: "M 550 1400 C 290 1400, 160 1400, 30 1400" },
 ] as const;
+
+// The default layout the Map renders: the hand-placed world. Map's `layout` prop defaults to
+// this, so /framework behaves exactly as before. The Sandbox passes its own WorldLayout. This
+// is a stable module-level reference so layout-dependent effects in Map don't re-run.
+export const WORLD_LAYOUT: WorldLayout = {
+  airport: { cx: 2200, cy: 1400 },
+  managers: MANAGERS,
+  workers: WORKERS,
+  workerLabels: WORKER_LABELS,
+  roads: ROADS,
+  flightPaths: FLIGHT_PATHS,
+};

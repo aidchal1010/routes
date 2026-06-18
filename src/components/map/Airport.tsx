@@ -2,15 +2,22 @@ import { palette } from "@/lib/palette";
 import PlaneIcon from "./PlaneIcon";
 
 type Props = {
+  // Optional placement. The airport is drawn around (2200, 1400); when a position is given
+  // (the Sandbox places it anywhere) the whole group is translated there, leaving every
+  // internal coordinate untouched. Omitted (the world) renders at the original spot.
+  position?: { cx: number; cy: number };
   onSelect?: () => void;
 };
 
-export default function Airport({ onSelect }: Props) {
+export default function Airport({ position, onSelect }: Props) {
   const cx = 2200;
   const cy = 1400;
+  const tx = position ? position.cx - cx : 0;
+  const ty = position ? position.cy - cy : 0;
 
   return (
     <g
+      transform={tx || ty ? `translate(${tx} ${ty})` : undefined}
       onClick={(e) => {
         e.stopPropagation();
         onSelect?.();

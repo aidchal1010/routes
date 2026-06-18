@@ -1,14 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import {
-  FLIGHT_PATHS,
-  MANAGERS,
-  ROADS,
-  WORKERS,
-  WORKER_LABELS,
-} from "@/lib/world-layout";
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Ref,
+} from "react";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { WORLD_LAYOUT, type WorldLayout } from "@/lib/world-layout";
 import { palette } from "@/lib/palette";
 import {
   createPausableTimeouts,
@@ -64,8 +65,6 @@ const MAX_CARS_PER_DIRECTION = 12;
 const MAX_PER_PATH_OR_ROAD = 2;
 const MAX_INBOUND_RETRIES = 10;
 
-const OUTBOUND_PATHS = FLIGHT_PATHS.filter((f) => f.direction === "outbound");
-
 function pickBurstSize(): number {
   const r = Math.random();
   if (r < 0.5) return 1;
@@ -88,9 +87,22 @@ function tryAddPlane(prev: ActivePlane[], plane: ActivePlane): ActivePlane[] {
 type MapProps = {
   onElementClick: (content: PanelContent) => void;
   onBackgroundClick: () => void;
+  // The data to render + animate. Defaults to the hand-placed world so /framework is
+  // unchanged; the Sandbox passes its built layout instead.
+  layout?: WorldLayout;
+  // When false, the static scene renders but no vehicles spawn (Sandbox build mode).
+  running?: boolean;
+  // Forwarded to the <svg> so a parent (the Sandbox) can map screen coords to SVG space.
+  svgRef?: Ref<SVGSVGElement>;
 };
 
-export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
+export default function Map({
+  onElementClick,
+  onBackgroundClick,
+  layout = WORLD_LAYOUT,
+  running = true,
+  svgRef,
+}: MapProps) {
   const [activePlanes, setActivePlanes] = useState<ActivePlane[]>([]);
   const [activeCars, setActiveCars] = useState<ActiveCar[]>([]);
   const activeCarsRef = useRef<ActiveCar[]>([]);
@@ -104,6 +116,11 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
   const timersRef = useRef<PausableTimeouts | null>(null);
   if (!timersRef.current) timersRef.current = createPausableTimeouts();
   const timers = timersRef.current;
+
+  const outboundPaths = useMemo(
+    () => layout.flightPaths.filter((f) => f.direction === "outbound"),
+    [layout],
+  );
 
   const setActiveCarsBoth = useCallback(
     (updater: (prev: ActiveCar[]) => ActiveCar[]) => {
@@ -132,7 +149,7 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
     (managerId: string) => {
       const delay = 1000 + Math.random() * 2000;
       timers.set(() => {
-        const inbound = FLIGHT_PATHS.find(
+        const inbound = layout.flightPaths.find(
           (f) => f.managerId === managerId && f.direction === "inbound",
         );
         if (!inbound) return;
@@ -149,7 +166,7 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
         );
       }, delay);
     },
-    [timers],
+    [layout, timers],
   );
 
   const spawnInboundCarReturn = useCallback(
@@ -165,9 +182,9 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
         return;
       }
 
-      const road = ROADS.find((r) => r.id === roadId);
+      const road = layout.roads.find((r) => r.id === roadId);
       if (!road) return;
-      const manager = MANAGERS.find((m) => m.id === road.managerId);
+      const manager = layout.managers.find((m) => m.id === road.managerId);
       if (!manager) return;
 
       if (countCarsByDirection("inbound") >= MAX_CARS_PER_DIRECTION) {
@@ -202,14 +219,20 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
         },
       ]);
     },
-    [countCarsByDirection, scheduleSynthesisAndReturn, setActiveCarsBoth, timers],
+    [
+      countCarsByDirection,
+      layout,
+      scheduleSynthesisAndReturn,
+      setActiveCarsBoth,
+      timers,
+    ],
   );
 
   const dispatchCycle = useCallback(
     (planeId: string, managerId: string) => {
-      const manager = MANAGERS.find((m) => m.id === managerId);
+      const manager = layout.managers.find((m) => m.id === managerId);
       if (!manager) return;
-      const workersForManager = WORKERS.filter(
+      const workersForManager = layout.workers.filter(
         (w) => w.managerId === managerId,
       );
       const N = workersForManager.length;
@@ -222,7 +245,7 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
       let actuallyDispatched = 0;
 
       for (const worker of chosenWorkers) {
-        const road = ROADS.find(
+        const road = layout.roads.find(
           (r) => r.managerId === managerId && r.workerId === worker.id,
         );
         if (!road) continue;
@@ -276,6 +299,7 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
     [
       countCarsByDirection,
       countCarsOnRoad,
+      layout,
       scheduleSynthesisAndReturn,
       setActiveCarsBoth,
       timers,
@@ -342,11 +366,13 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
 
   // Plane spawner: every 1.5–3s, fire a burst of 1–3 staggered outbound planes to
   // distinct managers. Both the stagger and the next-burst reschedule are managed
-  // timers, so a global pause freezes the spawner with no separate gate.
+  // timers, so a global pause freezes the spawner with no separate gate. Skipped
+  // entirely when not running (Sandbox build mode shows a static scene).
   useEffect(() => {
+    if (!running) return;
     const spawnBurst = () => {
       const burstSize = pickBurstSize();
-      const shuffled = [...OUTBOUND_PATHS].sort(() => Math.random() - 0.5);
+      const shuffled = [...outboundPaths].sort(() => Math.random() - 0.5);
       const chosen = shuffled.slice(0, burstSize);
       for (let i = 0; i < chosen.length; i++) {
         const path = chosen[i];
@@ -369,7 +395,7 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
 
     spawnBurst();
     // Unmount clearing is handled by the dedicated cleanup effect (timers.clearAll()).
-  }, [timers]);
+  }, [outboundPaths, running, timers]);
 
   return (
     <TransformWrapper
@@ -386,6 +412,7 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
         contentStyle={{ width: "100%", height: "100%" }}
       >
         <svg
+          ref={svgRef}
           viewBox="-200 -300 4900 3600"
           width="100%"
           height="100%"
@@ -393,24 +420,27 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
           onClick={onBackgroundClick}
         >
           <GridBackground />
-          {ROADS.map((r) => (
+          {layout.roads.map((r) => (
             <Road key={r.id} d={r.d} />
           ))}
-          {FLIGHT_PATHS.map((f) => (
+          {layout.flightPaths.map((f) => (
             <FlightPath key={f.id} d={f.d} color={f.color} />
           ))}
-          <Airport
-            onSelect={() =>
-              onElementClick(
-                getPlaceholderContent(
-                  "orchestrator",
-                  "ORCHESTRATOR",
-                  palette.orchestrator,
-                ),
-              )
-            }
-          />
-          {MANAGERS.map(({ id, ...config }) => (
+          {layout.airport && (
+            <Airport
+              position={layout.airport}
+              onSelect={() =>
+                onElementClick(
+                  getPlaceholderContent(
+                    "orchestrator",
+                    "ORCHESTRATOR",
+                    palette.orchestrator,
+                  ),
+                )
+              }
+            />
+          )}
+          {layout.managers.map(({ id, ...config }) => (
             <Manager
               key={id}
               {...config}
@@ -426,8 +456,10 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
               }
             />
           ))}
-          {WORKERS.map((worker) => {
-            const manager = MANAGERS.find((m) => m.id === worker.managerId)!;
+          {layout.workers.map((worker) => {
+            const manager = layout.managers.find(
+              (m) => m.id === worker.managerId,
+            )!;
             return (
               <Worker
                 key={worker.id}
@@ -443,7 +475,7 @@ export default function Map({ onElementClick, onBackgroundClick }: MapProps) {
               />
             );
           })}
-          {WORKER_LABELS.map((l) => (
+          {layout.workerLabels.map((l) => (
             <text
               key={l.managerId}
               x={l.position.cx}

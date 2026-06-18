@@ -12,6 +12,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/framework", label: "World" },
   { href: "/framework/build-guide", label: "Build Guide" },
+  { href: "/framework/sandbox", label: "Sandbox" },
 ] as const;
 
 type Props = { children?: React.ReactNode };
