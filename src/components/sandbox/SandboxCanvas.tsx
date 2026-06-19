@@ -1,9 +1,14 @@
 "use client";
 
-import { useCallback, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
 import Map from "@/components/map/Map";
 import type { WorldLayout } from "@/lib/world-layout";
-import { PIECE_MIME, type PieceKind, type Point } from "./sandbox-layout";
+import type { Point } from "./sandbox-layout";
+
+// Movement (px) under which a pointer up counts as a tap, not a pan.
+const TAP_SLOP = 10;
+const DOUBLE_TAP_MS = 320;
+const DOUBLE_TAP_SLOP = 40;
 
 type Props = {
   mode: "build" | "play";
@@ -13,28 +18,39 @@ type Props = {
   snapshot: WorldLayout | null;
   // Bumped each Play so the engine remounts fresh on a stable layout.
   playId: number;
-  onDropPiece: (kind: PieceKind, point: Point) => void;
-  // Double-click in build mode, reported in SVG world coords (for rename hit-testing).
+  // True when a palette piece is armed: a clean tap places it.
+  isArmed: boolean;
+  // Place the armed piece at the tapped point (SVG world coords).
+  onPlace: (point: Point) => void;
+  // Not-armed double-tap, in world coords (rename hit-testing).
   onCanvasDoubleClick?: (point: Point) => void;
   // SVG-space rename editor, rendered inside Map's <svg> so it tracks pan/zoom.
   overlay?: ReactNode;
 };
 
-// Owns the single <svg> + pan/zoom (via Map). Drop + double-click handlers live on this
-// container (HTML5 drag and native dblclick), so they never capture pointer pan/zoom
-// gestures. Screen->SVG conversion uses the forwarded svgRef's getScreenCTM, which composes
-// the live pan/zoom transform.
+// Owns the single <svg> + pan/zoom (via Map). Placement and rename use a pointer-based tap
+// model (works on mouse and touch) layered over react-zoom-pan-pinch (rzpp): capture-phase
+// listeners observe the gesture without preventDefault, so rzpp still pans/pinches. A tap with
+// no significant movement places (or, when not armed, a double-tap renames); a drag is a pan.
 export default function SandboxCanvas({
   mode,
   liveLayout,
   snapshot,
   playId,
-  onDropPiece,
+  isArmed,
+  onPlace,
   onCanvasDoubleClick,
   overlay,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const noop = useCallback(() => {}, []);
+
+  // Gesture tracking. `pointers` reconciles active ids as a Set (idempotent deletes, and a
+  // stale id self-heals when the same id comes down again — the mouse missed-up case). `down`
+  // is the current single-pointer start; `lastTap` drives double-tap detection.
+  const pointers = useRef<Set<number>>(new Set());
+  const down = useRef<{ x: number; y: number } | null>(null);
+  const lastTap = useRef<{ x: number; y: number; t: number } | null>(null);
 
   const clientToWorld = useCallback(
     (clientX: number, clientY: number): Point | null => {
@@ -46,40 +62,89 @@ export default function SandboxCanvas({
     [],
   );
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      const kind = e.dataTransfer.getData(PIECE_MIME) as PieceKind | "";
-      if (!kind) return;
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    // Self-heal: the same id reappearing means its previous up was missed (mouse has no
+    // implicit capture, e.g. released off-canvas). Start clean so it isn't read as a pinch.
+    if (pointers.current.has(e.pointerId)) pointers.current.clear();
+    pointers.current.add(e.pointerId);
+    // A second active pointer is a pinch — invalidate any pending tap.
+    down.current =
+      pointers.current.size > 1 ? null : { x: e.clientX, y: e.clientY };
+  }, []);
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      const start = down.current;
+      pointers.current.delete(e.pointerId);
+      down.current = null;
+      if (!start) return;
+
+      const moved = Math.hypot(e.clientX - start.x, e.clientY - start.y);
+      if (moved > TAP_SLOP) {
+        // A pan, not a tap. Never place; reset the double-tap timer.
+        lastTap.current = null;
+        return;
+      }
+
       const p = clientToWorld(e.clientX, e.clientY);
-      if (p) onDropPiece(kind, p);
+      if (!p) return;
+
+      if (isArmed) {
+        onPlace(p);
+        lastTap.current = null;
+        return;
+      }
+
+      // Not armed: pointer-based double-tap -> rename.
+      const prev = lastTap.current;
+      if (
+        prev &&
+        e.timeStamp - prev.t < DOUBLE_TAP_MS &&
+        Math.hypot(e.clientX - prev.x, e.clientY - prev.y) < DOUBLE_TAP_SLOP
+      ) {
+        lastTap.current = null;
+        onCanvasDoubleClick?.(p);
+      } else {
+        lastTap.current = { x: e.clientX, y: e.clientY, t: e.timeStamp };
+      }
     },
-    [clientToWorld, onDropPiece],
+    [clientToWorld, isArmed, onPlace, onCanvasDoubleClick],
   );
 
-  const handleDoubleClick = useCallback(
-    (e: React.MouseEvent) => {
-      const p = clientToWorld(e.clientX, e.clientY);
-      if (p) onCanvasDoubleClick?.(p);
-    },
-    [clientToWorld, onCanvasDoubleClick],
-  );
+  const handlePointerCancel = useCallback((e: React.PointerEvent) => {
+    pointers.current.delete(e.pointerId);
+    down.current = null;
+  }, []);
+
+  // Safety net: a pointer released off the canvas (over the toolbar/palette or out of the
+  // window) never fires the canvas's own up. A window listener clears the refs so the next
+  // tap isn't read as a pinch. Cleanup-only — no tap logic, no preventDefault — so rzpp's pan/
+  // pinch is unaffected, and it's idempotent with the capture handler. Build mode only.
+  useEffect(() => {
+    if (mode !== "build") return;
+    const reset = (e: PointerEvent) => {
+      pointers.current.delete(e.pointerId);
+      down.current = null;
+    };
+    window.addEventListener("pointerup", reset);
+    window.addEventListener("pointercancel", reset);
+    return () => {
+      window.removeEventListener("pointerup", reset);
+      window.removeEventListener("pointercancel", reset);
+    };
+  }, [mode]);
+
+  const build = mode === "build";
 
   return (
     <div
       className="absolute inset-0"
-      onDragOver={
-        mode === "build"
-          ? (e) => {
-              e.preventDefault();
-              e.dataTransfer.dropEffect = "copy";
-            }
-          : undefined
-      }
-      onDrop={mode === "build" ? handleDrop : undefined}
-      onDoubleClick={mode === "build" ? handleDoubleClick : undefined}
+      style={{ touchAction: "none" }}
+      onPointerDownCapture={build ? handlePointerDown : undefined}
+      onPointerUpCapture={build ? handlePointerUp : undefined}
+      onPointerCancelCapture={build ? handlePointerCancel : undefined}
     >
-      {mode === "build" ? (
+      {build ? (
         <Map
           key="build"
           layout={liveLayout}

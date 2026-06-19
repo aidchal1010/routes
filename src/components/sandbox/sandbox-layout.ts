@@ -52,8 +52,6 @@ export const EMPTY_SANDBOX: SandboxLayout = {
 };
 
 export type PieceKind = "orchestrator" | "manager" | "tool";
-// Shared between the palette (drag source) and the canvas (drop target).
-export const PIECE_MIME = "application/x-sandbox-piece";
 
 // The four fixed domains, in placement order, sourced from the world managers so a sandbox
 // manager looks identical to its world counterpart (color family, icon shape, domain label).

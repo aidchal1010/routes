@@ -4,7 +4,6 @@ import { palette } from "@/lib/palette";
 import {
   DOMAINS,
   MAX_MANAGERS,
-  PIECE_MIME,
   type PieceKind,
   type SandboxLayout,
 } from "./sandbox-layout";
@@ -12,12 +11,14 @@ import {
 type Props = {
   sandbox: SandboxLayout;
   mode: "build" | "play";
+  armed: PieceKind | null;
+  onArm: (kind: PieceKind) => void;
 };
 
-// Right-side overlay of draggable pieces. Gating mirrors the build order: orchestrator first,
-// then managers (cycling through the four fixed domains/colors), then tools (which attach to
-// the nearest manager on drop). Disabled in play mode.
-export default function SandboxPalette({ sandbox, mode }: Props) {
+// Right-side overlay of placeable pieces. Tap a chip to arm it, then tap the grid to place
+// (works on mouse and touch). Gating mirrors the build order: orchestrator first, then
+// managers (cycling through the four fixed colors), then tools. Disabled in play mode.
+export default function SandboxPalette({ sandbox, mode, armed, onArm }: Props) {
   const build = mode === "build";
   const orchestratorPlaced = sandbox.orchestrator !== null;
   const managersCount = sandbox.managers.length;
@@ -28,32 +29,24 @@ export default function SandboxPalette({ sandbox, mode }: Props) {
   const managerEnabled = build && orchestratorPlaced && nextDomain !== null;
   const toolEnabled = build && managersCount >= 1;
 
-  const dragProps = (kind: PieceKind, enabled: boolean) =>
-    enabled
-      ? {
-          draggable: true,
-          onDragStart: (e: React.DragEvent) => {
-            e.dataTransfer.setData(PIECE_MIME, kind);
-            e.dataTransfer.effectAllowed = "copy";
-          },
-        }
-      : {};
-
   return (
-    <aside className="pointer-events-auto absolute right-4 top-4 z-30 w-64 rounded-xl border border-night-800 bg-night-950/95 p-3 shadow-2xl backdrop-blur-sm">
-      <h2 className="mb-1 font-mono text-[11px] uppercase tracking-widest text-ink-400">
+    <aside className="pointer-events-auto absolute inset-x-2 bottom-2 z-30 w-auto rounded-xl border border-night-800 bg-night-950/95 p-3 shadow-2xl backdrop-blur-sm sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-4 sm:w-64">
+      <h2 className="mb-1 hidden font-mono text-[11px] uppercase tracking-widest text-ink-400 sm:block">
         Palette
       </h2>
-      <p className="mb-3 text-[11px] leading-snug text-ink-400">
-        {build
-          ? "Drag pieces onto the grid."
-          : "Stop to edit the layout."}
+      <p className="mb-3 hidden text-[11px] leading-snug text-ink-400 sm:block">
+        {!build
+          ? "Stop to edit the layout."
+          : armed
+            ? "Tap the grid to place. Tap the chip again to stop."
+            : "Tap a piece, then tap the grid to place."}
       </p>
 
-      <PaletteItem
+      <div className="flex gap-2 sm:block">
+        <PaletteItem
         enabled={orchestratorEnabled}
-        kind="orchestrator"
-        dragProps={dragProps}
+        armed={armed === "orchestrator"}
+        onArm={() => onArm("orchestrator")}
         swatch={palette.orchestrator}
         swatchShape="rounded"
         title="Orchestrator"
@@ -62,8 +55,8 @@ export default function SandboxPalette({ sandbox, mode }: Props) {
 
       <PaletteItem
         enabled={managerEnabled}
-        kind="manager"
-        dragProps={dragProps}
+        armed={armed === "manager"}
+        onArm={() => onArm("manager")}
         swatch={nextDomain ? nextDomain.colorBase : palette.night800}
         swatchShape="rounded"
         title="Manager"
@@ -78,44 +71,47 @@ export default function SandboxPalette({ sandbox, mode }: Props) {
 
       <PaletteItem
         enabled={toolEnabled}
-        kind="tool"
-        dragProps={dragProps}
+        armed={armed === "tool"}
+        onArm={() => onArm("tool")}
         swatch={palette.ink400}
         swatchShape="square"
         title="Tool"
         subtitle={
           managersCount >= 1 ? "Attaches to nearest manager" : "Add a manager first"
         }
-      />
+        />
+      </div>
     </aside>
   );
 }
 
 function PaletteItem({
   enabled,
-  kind,
-  dragProps,
+  armed,
+  onArm,
   swatch,
   swatchShape,
   title,
   subtitle,
 }: {
   enabled: boolean;
-  kind: PieceKind;
-  dragProps: (kind: PieceKind, enabled: boolean) => Record<string, unknown>;
+  armed: boolean;
+  onArm: () => void;
   swatch: string;
   swatchShape: "rounded" | "square";
   title: string;
   subtitle: string;
 }) {
   return (
-    <div
-      {...dragProps(kind, enabled)}
-      className={`mb-2 flex items-center gap-3 rounded-lg border border-night-800 px-3 py-2.5 transition-opacity ${
+    <button
+      type="button"
+      onClick={enabled ? onArm : undefined}
+      disabled={!enabled}
+      className={`mb-2 flex w-full flex-1 select-none items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition sm:flex-none ${
         enabled
-          ? "cursor-grab bg-night-900 opacity-100 active:cursor-grabbing"
-          : "cursor-not-allowed opacity-40"
-      }`}
+          ? "cursor-pointer bg-night-900 opacity-100"
+          : "cursor-not-allowed border-night-800 opacity-40"
+      } ${armed ? "border-orchestrator ring-2 ring-orchestrator" : "border-night-800"}`}
     >
       <span
         className={`h-7 w-7 shrink-0 ${swatchShape === "rounded" ? "rounded-md" : "rounded-sm"}`}
@@ -125,8 +121,8 @@ function PaletteItem({
         <span className="block truncate font-mono text-[12px] text-ink-100">
           {title}
         </span>
-        <span className="block truncate text-[11px] text-ink-400">{subtitle}</span>
+        <span className="hidden truncate text-[11px] text-ink-400 sm:block">{subtitle}</span>
       </span>
-    </div>
+    </button>
   );
 }

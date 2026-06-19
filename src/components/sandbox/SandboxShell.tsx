@@ -49,6 +49,11 @@ export default function SandboxShell() {
     value: string;
   } | null>(null);
   const [introOpen, setIntroOpen] = useState(false);
+  // Armed palette piece: a tap on the grid places it. null = nothing armed.
+  const [armed, setArmed] = useState<PieceKind | null>(null);
+  // Coarse pointer / narrow screen => show the "better on desktop" note (dismissible).
+  const [coarse, setCoarse] = useState(false);
+  const [noteDismissed, setNoteDismissed] = useState(false);
   const { paused, pause, resume } = usePause();
 
   const liveLayout = useMemo(() => buildLayout(sandbox), [sandbox]);
@@ -72,6 +77,15 @@ export default function SandboxShell() {
   const handleIntroClose = useCallback(() => {
     setIntroOpen(false);
     introShownThisLoad = true;
+  }, []);
+
+  // Touch / narrow screen detection for the "better on desktop" note. Read in an effect
+  // (client only) to avoid a hydration mismatch.
+  useEffect(() => {
+    setCoarse(
+      window.matchMedia("(pointer: coarse)").matches ||
+        window.matchMedia("(max-width: 820px)").matches,
+    );
   }, []);
 
   // Add a piece at the dropped point, enforcing the build order as a double-guard (the palette
@@ -113,6 +127,23 @@ export default function SandboxShell() {
     });
   }, []);
 
+  // Arm/disarm a palette piece (toggle). The palette only calls this for enabled chips, so
+  // gating/cap are respected.
+  const handleArm = useCallback((kind: PieceKind) => {
+    setArmed((a) => (a === kind ? null : kind));
+  }, []);
+
+  // Tap-to-place: drop the armed piece at the tapped point. Tools stay armed (drop several);
+  // orchestrator/manager disarm after one placement.
+  const handlePlace = useCallback(
+    (point: Point) => {
+      if (!armed) return;
+      handleDropPiece(armed, point);
+      if (armed !== "tool") setArmed(null);
+    },
+    [armed, handleDropPiece],
+  );
+
   // Play: from build, snapshot the layout (deep copy so the engine's data can't change under
   // it) and run on a freshly-keyed Map; from paused, just resume. Always resume on entry so a
   // Pause -> Stop -> add -> Play sequence is never frozen (paused survives the Map remount).
@@ -131,6 +162,7 @@ export default function SandboxShell() {
       setPlayId((n) => n + 1);
       setMode("play");
       setEditing(null);
+      setArmed(null);
     }
     resume();
   }, [mode, playable, sandbox, resume]);
@@ -143,6 +175,7 @@ export default function SandboxShell() {
   const handleStop = useCallback(() => {
     setMode("build");
     setSnapshot(null);
+    setArmed(null);
     resume();
   }, [resume]);
 
@@ -153,6 +186,7 @@ export default function SandboxShell() {
     setSnapshot(null);
     setMode("build");
     setEditing(null);
+    setArmed(null);
     resume();
   }, [resume]);
 
@@ -318,11 +352,34 @@ export default function SandboxShell() {
           liveLayout={liveLayout}
           snapshot={snapshot}
           playId={playId}
-          onDropPiece={handleDropPiece}
+          isArmed={armed !== null}
+          onPlace={handlePlace}
           onCanvasDoubleClick={handleCanvasDoubleClick}
           overlay={overlay}
         />
-        <SandboxPalette sandbox={sandbox} mode={mode} />
+        <SandboxPalette
+          sandbox={sandbox}
+          mode={mode}
+          armed={armed}
+          onArm={handleArm}
+        />
+
+        {coarse && !noteDismissed && (
+          <div className="pointer-events-auto absolute left-4 top-4 z-30 flex max-w-[260px] items-start gap-2 rounded-lg border border-night-800 bg-night-950/95 px-3 py-2 text-[11px] leading-snug text-ink-400 shadow-lg backdrop-blur-sm">
+            <span>
+              Heads up — the sandbox is richer on a desktop, with a mouse and
+              pan/zoom.
+            </span>
+            <button
+              type="button"
+              onClick={() => setNoteDismissed(true)}
+              aria-label="Dismiss"
+              className="shrink-0 text-base leading-none text-ink-400 transition-colors hover:text-ink-100"
+            >
+              ×
+            </button>
+          </div>
+        )}
       </div>
 
       <WelcomeModal
