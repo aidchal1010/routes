@@ -24,8 +24,12 @@ import {
 
 type Mode = "build" | "play";
 
-// Shown the first time the sandbox is ever opened, then suppressed by a persistent flag.
-const SANDBOX_INTRO_KEY = "routes-sandbox-intro-seen";
+// In-memory flag: the intro shows once per page load. It resets on a full reload (a fresh
+// visit or refresh shows it again) but persists across in-app navigation (World <-> Sandbox)
+// while the app stays loaded. Set on dismiss, not on open, so React StrictMode's dev
+// double-mount doesn't eat the first show.
+let introShownThisLoad = false;
+
 const SANDBOX_INTRO = [
   {
     title: "The Sandbox",
@@ -59,17 +63,15 @@ export default function SandboxShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Show the intro only the first time the sandbox is ever opened. Read in an effect
-  // (client only) to avoid a hydration mismatch.
+  // Open the intro once per page load. Don't mark it shown here — only on dismiss — so
+  // StrictMode's dev double-mount (and any remount) still shows it the first time.
   useEffect(() => {
-    if (window.localStorage.getItem(SANDBOX_INTRO_KEY) !== "true") {
-      setIntroOpen(true);
-    }
+    if (!introShownThisLoad) setIntroOpen(true);
   }, []);
 
   const handleIntroClose = useCallback(() => {
     setIntroOpen(false);
-    window.localStorage.setItem(SANDBOX_INTRO_KEY, "true");
+    introShownThisLoad = true;
   }, []);
 
   // Add a piece at the dropped point, enforcing the build order as a double-guard (the palette
