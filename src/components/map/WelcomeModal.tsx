@@ -9,7 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 // placeholder draft text.
 type WelcomeStep = { title: string; body: string; points?: string[] };
 
-const STEPS: WelcomeStep[] = [
+const DEFAULT_STEPS: WelcomeStep[] = [
   {
     title: "Welcome to Routes",
     body: "Routes is a living map of how modern AI agent systems are built. Instead of one model trying to do everything, the work is split across a team. A central coordinator plans the job and hands pieces to specialists, and each specialist reaches for the tools it needs. This world shows that structure in motion.",
@@ -41,12 +41,25 @@ type Props = {
   // Seeds the "don't show again" checkbox so a manual reopen reflects the saved
   // preference instead of always defaulting to unchecked.
   initialDontShowAgain?: boolean;
+  // Screens to show. Defaults to the world's three-step intro; the Sandbox passes a single
+  // screen (which collapses the multi-step chrome).
+  steps?: WelcomeStep[];
+  // Label for the final/only button (default "Explore →").
+  ctaLabel?: string;
+  // Show the "don't show again" checkbox (default true). The Sandbox's once-ever intro hides
+  // it (a localStorage flag already makes it show once).
+  showDontShowAgain?: boolean;
+  ariaLabel?: string;
 };
 
 export default function WelcomeModal({
   open,
   onClose,
   initialDontShowAgain = false,
+  steps = DEFAULT_STEPS,
+  ctaLabel = "Explore →",
+  showDontShowAgain = true,
+  ariaLabel = "Welcome to Routes",
 }: Props) {
   const [step, setStep] = useState(0);
   const [dontShowAgain, setDontShowAgain] = useState(initialDontShowAgain);
@@ -71,9 +84,9 @@ export default function WelcomeModal({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, dontShowAgain, onClose]);
 
-  const multi = STEPS.length > 1;
-  const isLast = step === STEPS.length - 1;
-  const current = STEPS[step];
+  const multi = steps.length > 1;
+  const isLast = step === steps.length - 1;
+  const current = steps[step];
 
   const handleClose = () => onClose(dontShowAgain);
 
@@ -100,7 +113,7 @@ export default function WelcomeModal({
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="Welcome to Routes"
+            aria-label={ariaLabel}
             className="relative w-full max-w-lg overflow-hidden rounded-xl border border-night-800 bg-night-950 shadow-2xl"
           >
             {/* Close (X) */}
@@ -149,7 +162,7 @@ export default function WelcomeModal({
             {/* Step dots (multi-step only) */}
             {multi && (
               <div className="mt-6 flex justify-center gap-1.5">
-                {STEPS.map((_, i) => (
+                {steps.map((_, i) => (
                   <span
                     key={i}
                     className={`h-1.5 rounded-full transition-all ${
@@ -162,15 +175,20 @@ export default function WelcomeModal({
 
             {/* Footer: don't-show-again + navigation */}
             <div className="mt-6 flex items-center justify-between gap-4 border-t border-night-800 px-7 py-4">
-              <label className="flex cursor-pointer select-none items-center gap-2 text-[12px] text-ink-400">
-                <input
-                  type="checkbox"
-                  checked={dontShowAgain}
-                  onChange={(e) => setDontShowAgain(e.target.checked)}
-                  className="h-3.5 w-3.5 accent-orchestrator"
-                />
-                Don&apos;t show again
-              </label>
+              {showDontShowAgain ? (
+                <label className="flex cursor-pointer select-none items-center gap-2 text-[12px] text-ink-400">
+                  <input
+                    type="checkbox"
+                    checked={dontShowAgain}
+                    onChange={(e) => setDontShowAgain(e.target.checked)}
+                    className="h-3.5 w-3.5 accent-orchestrator"
+                  />
+                  Don&apos;t show again
+                </label>
+              ) : (
+                // Keeps the footer's justify-between layout (buttons stay right).
+                <span />
+              )}
 
               <div className="flex items-center gap-2">
                 {multi && !isLast && (
@@ -196,7 +214,7 @@ export default function WelcomeModal({
                   onClick={isLast ? handleClose : () => setStep((s) => s + 1)}
                   className="rounded-md bg-orchestrator px-4 py-1.5 text-[13px] font-medium text-ink-100 transition-colors hover:bg-orchestratorLight"
                 >
-                  {isLast ? "Explore →" : "Next →"}
+                  {isLast ? ctaLabel : "Next →"}
                 </button>
               </div>
             </div>

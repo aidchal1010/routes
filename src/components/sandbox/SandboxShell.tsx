@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import TopBar from "@/components/ui/TopBar";
 import { usePause } from "@/components/map/PauseContext";
+import WelcomeModal from "@/components/map/WelcomeModal";
+import { palette } from "@/lib/palette";
 import type { WorldLayout } from "@/lib/world-layout";
 import SandboxCanvas from "./SandboxCanvas";
 import SandboxPalette from "./SandboxPalette";
 import {
+  DEFAULT_NAME,
   EMPTY_SANDBOX,
   MAX_MANAGERS,
   buildLayout,
@@ -21,15 +24,53 @@ import {
 
 type Mode = "build" | "play";
 
+// Shown the first time the sandbox is ever opened, then suppressed by a persistent flag.
+const SANDBOX_INTRO_KEY = "routes-sandbox-intro-seen";
+const SANDBOX_INTRO = [
+  {
+    title: "The Sandbox",
+    body: "This is your space to build an agent system and watch it run. Drag an orchestrator onto the grid, then add managers, then tools. The roads and flight paths draw themselves, and a manager can only connect up to the orchestrator and down to its tools, never sideways. Double-click any piece to rename it to whatever you are building. When every manager has at least one tool, press Play and watch the requests flow through the system you made.",
+  },
+];
+
 export default function SandboxShell() {
   const [sandbox, setSandbox] = useState<SandboxLayout>(EMPTY_SANDBOX);
   const [mode, setMode] = useState<Mode>("build");
   const [snapshot, setSnapshot] = useState<WorldLayout | null>(null);
   const [playId, setPlayId] = useState(0);
+  // Inline-rename target (build mode). id is null for the singleton orchestrator.
+  const [editing, setEditing] = useState<{
+    kind: PieceKind;
+    id: string | null;
+    value: string;
+  } | null>(null);
+  const [introOpen, setIntroOpen] = useState(false);
   const { paused, pause, resume } = usePause();
 
   const liveLayout = useMemo(() => buildLayout(sandbox), [sandbox]);
   const playable = canPlay(sandbox);
+
+  // Release the global pause on mount. PauseProvider starts paused=true (it is shared with
+  // the world, which relies on that for its welcome flow); the sandbox has no welcome and
+  // must not sit frozen, or the first Play would mount its engine paused. Build mode is
+  // inert (running=false), so this only matters once Play runs. Run once on mount.
+  useEffect(() => {
+    resume();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Show the intro only the first time the sandbox is ever opened. Read in an effect
+  // (client only) to avoid a hydration mismatch.
+  useEffect(() => {
+    if (window.localStorage.getItem(SANDBOX_INTRO_KEY) !== "true") {
+      setIntroOpen(true);
+    }
+  }, []);
+
+  const handleIntroClose = useCallback(() => {
+    setIntroOpen(false);
+    window.localStorage.setItem(SANDBOX_INTRO_KEY, "true");
+  }, []);
 
   // Add a piece at the dropped point, enforcing the build order as a double-guard (the palette
   // already gates the drag sources).
@@ -37,7 +78,10 @@ export default function SandboxShell() {
     setSandbox((s) => {
       if (kind === "orchestrator") {
         if (s.orchestrator) return s; // single orchestrator
-        return { ...s, orchestrator: { position: point } };
+        return {
+          ...s,
+          orchestrator: { position: point, name: DEFAULT_NAME.orchestrator },
+        };
       }
       if (kind === "manager") {
         if (!s.orchestrator || s.managers.length >= MAX_MANAGERS) return s;
@@ -45,7 +89,12 @@ export default function SandboxShell() {
           ...s,
           managers: [
             ...s.managers,
-            { id: makeId("mgr"), position: point, domainIndex: s.managers.length },
+            {
+              id: makeId("mgr"),
+              position: point,
+              domainIndex: s.managers.length,
+              name: DEFAULT_NAME.manager,
+            },
           ],
         };
       }
@@ -54,7 +103,10 @@ export default function SandboxShell() {
       if (!managerId) return s; // needs at least one manager
       return {
         ...s,
-        tools: [...s.tools, { id: makeId("tool"), position: point, managerId }],
+        tools: [
+          ...s.tools,
+          { id: makeId("tool"), position: point, managerId, name: DEFAULT_NAME.tool },
+        ],
       };
     });
   }, []);
@@ -65,7 +117,10 @@ export default function SandboxShell() {
   const handlePlay = useCallback(() => {
     if (mode === "build") {
       if (!playable) return;
-      const snap = structuredClone(buildLayout(sandbox));
+      // A fresh buildLayout() result is already a new object disconnected from future edits
+      // (the palette is disabled in play mode), so no structuredClone is needed — and
+      // dropping it removes any chance of the Play handler throwing before it runs.
+      const snap = buildLayout(sandbox);
       if (process.env.NODE_ENV !== "production") {
         const problems = validateLayout(snap);
         if (problems.length) console.warn("[sandbox] invalid layout:", problems);
@@ -73,25 +128,151 @@ export default function SandboxShell() {
       setSnapshot(snap);
       setPlayId((n) => n + 1);
       setMode("play");
+      setEditing(null);
     }
     resume();
   }, [mode, playable, sandbox, resume]);
 
   const handlePause = useCallback(() => pause(), [pause]);
 
-  // Stop: leave play, keep the placed pieces (the snapshot was a deep copy, so liveLayout is
-  // intact) so the user can add a piece and Play again.
+  // Stop: leave play, keep the placed pieces so the user can add a piece and Play again.
+  // resume() so paused returns to a clean state — a Pause -> Stop -> add -> Play sequence
+  // must not mount the next engine frozen.
   const handleStop = useCallback(() => {
     setMode("build");
     setSnapshot(null);
-  }, []);
+    resume();
+  }, [resume]);
 
-  // Restart: the explicit destructive wipe back to a blank build canvas.
+  // Restart: the explicit destructive wipe back to a blank build canvas. resume() for the
+  // same clean-state reason as Stop.
   const handleRestart = useCallback(() => {
     setSandbox(EMPTY_SANDBOX);
     setSnapshot(null);
     setMode("build");
-  }, []);
+    setEditing(null);
+    resume();
+  }, [resume]);
+
+  // Double-click a placed piece (build mode) to rename it. Hit-test smallest first; the
+  // half-extents match the components' drawn geometry (tool 64px body, manager 140px body,
+  // orchestrator's 390x210 non-square body).
+  const handleCanvasDoubleClick = useCallback(
+    (p: Point) => {
+      for (const t of sandbox.tools) {
+        if (Math.abs(t.position.cx - p.cx) <= 40 && Math.abs(t.position.cy - p.cy) <= 40) {
+          setEditing({ kind: "tool", id: t.id, value: t.name });
+          return;
+        }
+      }
+      for (const m of sandbox.managers) {
+        if (Math.abs(m.position.cx - p.cx) <= 95 && Math.abs(m.position.cy - p.cy) <= 95) {
+          setEditing({ kind: "manager", id: m.id, value: m.name });
+          return;
+        }
+      }
+      if (sandbox.orchestrator) {
+        const o = sandbox.orchestrator.position;
+        if (Math.abs(o.cx - p.cx) <= 195 && Math.abs(o.cy - p.cy) <= 105) {
+          setEditing({
+            kind: "orchestrator",
+            id: null,
+            value: sandbox.orchestrator.name,
+          });
+        }
+      }
+    },
+    [sandbox],
+  );
+
+  // Commit the edit (Enter / blur): write the trimmed value, or fall back to the type
+  // default if empty.
+  const commitEdit = useCallback(() => {
+    if (!editing) return;
+    const e = editing;
+    const name = e.value.trim() || DEFAULT_NAME[e.kind];
+    setSandbox((s) => {
+      if (e.kind === "orchestrator") {
+        return s.orchestrator
+          ? { ...s, orchestrator: { ...s.orchestrator, name } }
+          : s;
+      }
+      if (e.kind === "manager") {
+        return {
+          ...s,
+          managers: s.managers.map((m) => (m.id === e.id ? { ...m, name } : m)),
+        };
+      }
+      return {
+        ...s,
+        tools: s.tools.map((t) => (t.id === e.id ? { ...t, name } : t)),
+      };
+    });
+    setEditing(null);
+  }, [editing]);
+
+  const cancelEdit = useCallback(() => setEditing(null), []);
+
+  // The rename editor lives in SVG space (inside Map's <svg> via the `overlay` prop) so it
+  // tracks pan/zoom. Anchor it at the edited piece's label position.
+  const editAnchor = ((): Point | null => {
+    if (!editing) return null;
+    if (editing.kind === "orchestrator") {
+      return sandbox.orchestrator
+        ? {
+            cx: sandbox.orchestrator.position.cx,
+            cy: sandbox.orchestrator.position.cy + 195,
+          }
+        : null;
+    }
+    if (editing.kind === "manager") {
+      const m = sandbox.managers.find((m) => m.id === editing.id);
+      return m ? { cx: m.position.cx, cy: m.position.cy + 150 } : null;
+    }
+    const t = sandbox.tools.find((t) => t.id === editing.id);
+    return t ? { cx: t.position.cx, cy: t.position.cy + 64 } : null;
+  })();
+
+  const overlay =
+    editing && editAnchor ? (
+      <foreignObject
+        x={editAnchor.cx - 260}
+        y={editAnchor.cy - 40}
+        width={520}
+        height={80}
+      >
+        <input
+          autoFocus
+          value={editing.value}
+          onChange={(ev) =>
+            setEditing((e) => (e ? { ...e, value: ev.target.value } : e))
+          }
+          onFocus={(ev) => ev.currentTarget.select()}
+          onKeyDown={(ev) => {
+            if (ev.key === "Enter") commitEdit();
+            else if (ev.key === "Escape") cancelEdit();
+          }}
+          onBlur={commitEdit}
+          // Don't let the input's pointer-down start a pan.
+          onPointerDown={(ev) => ev.stopPropagation()}
+          style={{
+            width: "100%",
+            height: "100%",
+            boxSizing: "border-box",
+            textAlign: "center",
+            fontFamily: "monospace",
+            fontSize: 34,
+            letterSpacing: 2,
+            color: palette.ink100,
+            background: palette.night950,
+            border: `2px solid ${palette.orchestrator}`,
+            borderRadius: 8,
+            outline: "none",
+            padding: "0 16px",
+          }}
+        />
+      </foreignObject>
+    ) : null;
 
   return (
     <div className="flex h-full flex-col">
@@ -136,9 +317,20 @@ export default function SandboxShell() {
           snapshot={snapshot}
           playId={playId}
           onDropPiece={handleDropPiece}
+          onCanvasDoubleClick={handleCanvasDoubleClick}
+          overlay={overlay}
         />
         <SandboxPalette sandbox={sandbox} mode={mode} />
       </div>
+
+      <WelcomeModal
+        open={introOpen}
+        steps={SANDBOX_INTRO}
+        ctaLabel="Start building"
+        showDontShowAgain={false}
+        ariaLabel="The Sandbox"
+        onClose={handleIntroClose}
+      />
     </div>
   );
 }

@@ -66,7 +66,7 @@ export default function SandboxPalette({ sandbox, mode }: Props) {
         dragProps={dragProps}
         swatch={nextDomain ? nextDomain.colorBase : palette.night800}
         swatchShape="rounded"
-        title={nextDomain ? `Manager · ${nextDomain.domain}` : "Manager"}
+        title="Manager"
         subtitle={
           nextDomain === null
             ? "All four placed"

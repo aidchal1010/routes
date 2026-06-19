@@ -16,9 +16,28 @@ export type Point = { cx: number; cy: number };
 // derives the renderable/animatable WorldLayout from it. `id` strings are the join keys the
 // motion engine matches on — deriving everything from one set of ids is what keeps the
 // fragile dispatchCycle string-join consistent.
-export type PlacedOrchestrator = { position: Point };
-export type PlacedManager = { id: string; position: Point; domainIndex: number };
-export type PlacedTool = { id: string; position: Point; managerId: string };
+// `name` is the editable display label, defaulting to the generic type at placement
+// (renamed via double-click). It drives the rendered label.
+export type PlacedOrchestrator = { position: Point; name: string };
+export type PlacedManager = {
+  id: string;
+  position: Point;
+  domainIndex: number;
+  name: string;
+};
+export type PlacedTool = {
+  id: string;
+  position: Point;
+  managerId: string;
+  name: string;
+};
+
+// Default labels per piece type (also the rename starting value).
+export const DEFAULT_NAME = {
+  orchestrator: "ORCHESTRATOR",
+  manager: "MANAGER",
+  tool: "TOOL",
+} as const;
 
 export type SandboxLayout = {
   orchestrator: PlacedOrchestrator | null;
@@ -86,7 +105,6 @@ export function bowedCubic(a: Point, b: Point, bowFrac: number): string {
 
 const ROAD_BOW = 0.12;
 const FLIGHT_BOW = 0.2;
-const TOOLS_LABEL_RISE = 120; // nudge the "TOOLS" label above the cluster centroid
 
 // Find the placed manager nearest a point (a dropped tool attaches to it). null if none.
 export function nearestManagerId(
@@ -111,7 +129,14 @@ export function nearestManagerId(
 // key is taken from the same manager.id / tool.id used to build managers/workers, so the
 // dispatchCycle string-join cannot desync.
 export function buildLayout(sandbox: SandboxLayout): WorldLayout {
-  const airport = sandbox.orchestrator ? sandbox.orchestrator.position : null;
+  const airport = sandbox.orchestrator
+    ? {
+        ...sandbox.orchestrator.position,
+        label: sandbox.orchestrator.name,
+        // Bigger than the world's 36 so the label reads at the sandbox's default zoom.
+        labelSize: 50,
+      }
+    : null;
 
   const managers: ManagerConfig[] = sandbox.managers.map((m) => {
     const style = DOMAINS[m.domainIndex];
@@ -124,6 +149,7 @@ export function buildLayout(sandbox: SandboxLayout): WorldLayout {
       colorIcon: style.colorIcon,
       iconShape: style.iconShape,
       domain: style.domain,
+      label: m.name,
     };
   });
 
@@ -131,6 +157,7 @@ export function buildLayout(sandbox: SandboxLayout): WorldLayout {
     id: t.id,
     position: t.position,
     managerId: t.managerId,
+    label: t.name,
   }));
 
   // Roads: authored manager -> tool (the inbound Car reuses the same `d` and reverses).
@@ -168,17 +195,9 @@ export function buildLayout(sandbox: SandboxLayout): WorldLayout {
     }
   }
 
-  // One "TOOLS" label per manager that has tools, at the cluster centroid nudged upward.
+  // Tools carry their own per-tool labels now (worker.label), so the Sandbox emits no
+  // cluster "TOOLS" label — that centroid label used to overlap the manager labels.
   const workerLabels: WorkerLabelConfig[] = [];
-  for (const m of managers) {
-    const mgrTools = sandbox.tools.filter((t) => t.managerId === m.id);
-    if (mgrTools.length === 0) continue;
-    const cx =
-      mgrTools.reduce((s, t) => s + t.position.cx, 0) / mgrTools.length;
-    const cy =
-      mgrTools.reduce((s, t) => s + t.position.cy, 0) / mgrTools.length;
-    workerLabels.push({ managerId: m.id, position: { cx, cy: cy - TOOLS_LABEL_RISE } });
-  }
 
   return { airport, managers, workers, workerLabels, roads, flightPaths };
 }

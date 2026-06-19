@@ -13,6 +13,9 @@ export type ManagerConfig = {
   colorIcon: string;
   iconShape: IconShape;
   domain: string;
+  // Optional display label. Unset (the world) keeps the default MANAGER + domain two-line
+  // label; the Sandbox sets it to the piece's name to show a single custom line.
+  label?: string;
 };
 
 export const MANAGERS: readonly ManagerConfig[] = [
@@ -62,6 +65,9 @@ export type WorkerConfig = {
   id: string;
   position: { cx: number; cy: number };
   managerId: string;
+  // Optional per-tool label. Unset (the world) renders no per-tool text (the world uses one
+  // cluster "TOOLS" label instead); the Sandbox sets it to the tool's name.
+  label?: string;
 };
 
 export type WorkerLabelConfig = {
@@ -171,7 +177,7 @@ export const FLIGHT_PATHS: readonly FlightPathConfig[] = [
 // on the hand-placed world OR on a layout the Sandbox builds at runtime. `airport` is
 // nullable so a partially-built sandbox layout (no orchestrator yet) is representable.
 export type WorldLayout = {
-  airport: { cx: number; cy: number } | null;
+  airport: { cx: number; cy: number; label?: string; labelSize?: number } | null;
   managers: readonly ManagerConfig[];
   workers: readonly WorkerConfig[];
   workerLabels: readonly WorkerLabelConfig[];

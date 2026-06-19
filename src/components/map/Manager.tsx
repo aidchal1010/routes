@@ -9,6 +9,9 @@ type Props = {
   colorIcon: string;
   iconShape: IconShape;
   domain: string;
+  // When set (the Sandbox), render this single label line instead of the default
+  // MANAGER + domain two-line block. Managers stay distinguished by color/icon.
+  label?: string;
   onSelect?: () => void;
 };
 
@@ -20,6 +23,7 @@ export default function Manager({
   colorIcon,
   iconShape,
   domain,
+  label,
   onSelect,
 }: Props) {
   return (
@@ -81,28 +85,44 @@ export default function Manager({
         />
       )}
 
-      <text
-        x={cx}
-        y={cy + 150}
-        textAnchor="middle"
-        fontFamily="monospace"
-        fontSize={36}
-        letterSpacing={2}
-        fill={palette.ink400}
-      >
-        MANAGER
-      </text>
-      <text
-        x={cx}
-        y={cy + 194}
-        textAnchor="middle"
-        fontFamily="monospace"
-        fontSize={36}
-        letterSpacing={2}
-        fill={palette.ink400}
-      >
-        {domain}
-      </text>
+      {label !== undefined ? (
+        <text
+          x={cx}
+          y={cy + 156}
+          textAnchor="middle"
+          fontFamily="monospace"
+          fontSize={50}
+          letterSpacing={2}
+          fill={palette.ink400}
+        >
+          {label}
+        </text>
+      ) : (
+        <>
+          <text
+            x={cx}
+            y={cy + 150}
+            textAnchor="middle"
+            fontFamily="monospace"
+            fontSize={36}
+            letterSpacing={2}
+            fill={palette.ink400}
+          >
+            MANAGER
+          </text>
+          <text
+            x={cx}
+            y={cy + 194}
+            textAnchor="middle"
+            fontFamily="monospace"
+            fontSize={36}
+            letterSpacing={2}
+            fill={palette.ink400}
+          >
+            {domain}
+          </text>
+        </>
+      )}
     </g>
   );
 }

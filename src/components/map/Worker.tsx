@@ -1,8 +1,13 @@
+import { palette } from "@/lib/palette";
+
 type Props = {
   position: { cx: number; cy: number };
   colorBase: string;
   colorMid: string;
   colorDeep: string;
+  // Optional per-tool label rendered below the tool. Unset (the world) renders nothing (the
+  // world uses one cluster "TOOLS" label); the Sandbox passes the tool's name.
+  label?: string;
   onSelect?: () => void;
 };
 
@@ -11,6 +16,7 @@ export default function Worker({
   colorBase,
   colorMid,
   colorDeep,
+  label,
   onSelect,
 }: Props) {
   return (
@@ -45,6 +51,20 @@ export default function Worker({
         rx={6}
         fill={colorBase}
       />
+
+      {label !== undefined && (
+        <text
+          x={cx}
+          y={cy + 86}
+          textAnchor="middle"
+          fontFamily="monospace"
+          fontSize={44}
+          letterSpacing={2}
+          fill={palette.ink400}
+        >
+          {label}
+        </text>
+      )}
     </g>
   );
 }

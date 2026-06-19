@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
   type Ref,
 } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
@@ -94,6 +95,9 @@ type MapProps = {
   running?: boolean;
   // Forwarded to the <svg> so a parent (the Sandbox) can map screen coords to SVG space.
   svgRef?: Ref<SVGSVGElement>;
+  // Optional SVG-space nodes rendered on top of the scene (the Sandbox's rename editor).
+  // In SVG space, so it tracks pan/zoom for free. The world passes none.
+  overlay?: ReactNode;
 };
 
 export default function Map({
@@ -102,6 +106,7 @@ export default function Map({
   layout = WORLD_LAYOUT,
   running = true,
   svgRef,
+  overlay,
 }: MapProps) {
   const [activePlanes, setActivePlanes] = useState<ActivePlane[]>([]);
   const [activeCars, setActiveCars] = useState<ActiveCar[]>([]);
@@ -429,6 +434,8 @@ export default function Map({
           {layout.airport && (
             <Airport
               position={layout.airport}
+              label={layout.airport.label}
+              labelSize={layout.airport.labelSize}
               onSelect={() =>
                 onElementClick(
                   getPlaceholderContent(
@@ -467,6 +474,7 @@ export default function Map({
                 colorBase={manager.colorIcon}
                 colorMid={manager.colorBase}
                 colorDeep={manager.colorMid}
+                label={worker.label}
                 onSelect={() =>
                   onElementClick(
                     getPlaceholderContent("tool", "TOOL", manager.colorIcon),
@@ -532,6 +540,7 @@ export default function Map({
               }
             />
           ))}
+          {overlay}
         </svg>
       </TransformComponent>
     </TransformWrapper>

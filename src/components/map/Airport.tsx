@@ -6,10 +6,20 @@ type Props = {
   // (the Sandbox places it anywhere) the whole group is translated there, leaving every
   // internal coordinate untouched. Omitted (the world) renders at the original spot.
   position?: { cx: number; cy: number };
+  // Optional label, defaulting to the generic type. The Sandbox passes the piece's name.
+  label?: string;
+  // Optional label font size (world units). Defaults to the world's 36; the Sandbox bumps
+  // it for readability at the sandbox's default zoom. Sandbox-scoped — the world is unchanged.
+  labelSize?: number;
   onSelect?: () => void;
 };
 
-export default function Airport({ position, onSelect }: Props) {
+export default function Airport({
+  position,
+  label = "ORCHESTRATOR",
+  labelSize = 36,
+  onSelect,
+}: Props) {
   const cx = 2200;
   const cy = 1400;
   const tx = position ? position.cx - cx : 0;
@@ -91,11 +101,11 @@ export default function Airport({ position, onSelect }: Props) {
         y={cy + 195}
         textAnchor="middle"
         fontFamily="monospace"
-        fontSize={36}
+        fontSize={labelSize}
         letterSpacing={2}
         fill={palette.ink400}
       >
-        ORCHESTRATOR
+        {label}
       </text>
     </g>
   );
