@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -22,6 +22,29 @@ export default function TopBar({ children }: Props) {
   const pathname = usePathname();
   // Tap-toggle for the teaser tooltip — on touch there's no hover, so a tap reveals it.
   const [teaserOpen, setTeaserOpen] = useState(false);
+  const teaserRef = useRef<HTMLSpanElement>(null);
+
+  // While the tooltip is pinned open (by a click/tap), dismiss it on a tap/click outside the
+  // teaser or on Escape. The effect runs after the opening click, so that click's own
+  // pointerdown doesn't self-close; the button's pointerdown is inside teaserRef, so toggling
+  // it closed still works. Hover/focus reveal is pure CSS and untouched.
+  useEffect(() => {
+    if (!teaserOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (teaserRef.current && !teaserRef.current.contains(e.target as Node)) {
+        setTeaserOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setTeaserOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [teaserOpen]);
 
   return (
     <header className="relative z-40 flex h-12 shrink-0 items-center justify-between border-b border-night-800 bg-night-950 px-4">
@@ -51,7 +74,11 @@ export default function TopBar({ children }: Props) {
         {/* Coming-soon teaser for the advisor feature. NOT a route: no Link/href, aria-disabled,
             a click only toggles the tooltip. The always-visible "Soon" pill carries the tease on
             touch; the tooltip adds detail on hover / keyboard focus / tap. */}
-        <span className="group relative shrink-0">
+        <span
+          ref={teaserRef}
+          onMouseLeave={() => setTeaserOpen(false)}
+          className="group relative shrink-0"
+        >
           <button
             type="button"
             aria-disabled="true"

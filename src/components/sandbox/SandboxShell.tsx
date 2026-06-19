@@ -33,7 +33,7 @@ let introShownThisLoad = false;
 const SANDBOX_INTRO = [
   {
     title: "The Sandbox",
-    body: "This is your space to build an agent system and watch it run. Drag an orchestrator onto the grid, then add managers, then tools. The roads and flight paths draw themselves, and a manager can only connect up to the orchestrator and down to its tools, never sideways. Double-click any piece to rename it to whatever you are building. When every manager has at least one tool, press Play and watch the requests flow through the system you made.",
+    body: "This is your space to build an agent system and watch it run. Pick a piece from the palette and place it on the grid: an orchestrator first, then managers, then tools. The roads and flight paths draw themselves, and a manager can only connect up to the orchestrator and down to its tools, never sideways. Double-click or double-tap a piece to rename it to whatever you are building. When every manager has at least one tool, press Play and watch the requests flow through the system you made.",
   },
 ];
 
@@ -367,8 +367,7 @@ export default function SandboxShell() {
         {coarse && !noteDismissed && (
           <div className="pointer-events-auto absolute left-4 top-4 z-30 flex max-w-[260px] items-start gap-2 rounded-lg border border-night-800 bg-night-950/95 px-3 py-2 text-[11px] leading-snug text-ink-400 shadow-lg backdrop-blur-sm">
             <span>
-              Heads up — the sandbox is richer on a desktop, with a mouse and
-              pan/zoom.
+              The sandbox is richer on a desktop, with a mouse and pan/zoom.
             </span>
             <button
               type="button"

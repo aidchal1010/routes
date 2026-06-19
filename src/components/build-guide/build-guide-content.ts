@@ -105,7 +105,7 @@ while True:
 
 print(reply.content)`;
 
-const MANAGER_SKELETON = `# manager.py — illustrative skeleton. Check your provider's current SDK.
+const MANAGER_SKELETON = `# manager.py. Illustrative skeleton. Check your provider's current SDK.
 def run_manager(domain_prompt, tools, task):
     messages = [{"role": "user", "content": task}]
     while True:
@@ -122,7 +122,7 @@ def run_manager(domain_prompt, tools, task):
             return text_of(reply)            # no tool wanted: this is the summary
         messages.append({"role": "user", "content": run_tools(calls)})`;
 
-const ORCHESTRATOR_SKELETON = `# orchestrator.py — illustrative skeleton. Check your provider's current SDK.
+const ORCHESTRATOR_SKELETON = `# orchestrator.py. Illustrative skeleton. Check your provider's current SDK.
 def plan(request):
     reply = client.messages.create(
         model="claude-opus-4-8",             # your strongest model
